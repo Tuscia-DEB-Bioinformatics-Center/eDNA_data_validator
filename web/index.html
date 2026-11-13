@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Validatore tabelle eDNA</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <h1>Validatore tabelle eDNA</h1>
+    <p>Controlla la tabella dei campioni prima di inviarla al gruppo di bioinformatica.
+      Tutto avviene nel tuo browser: il file non lascia il computer.</p>
+  </header>
+
+  <main>
+    <p id="status" class="status" role="status">Preparazione del validatore…</p>
+
+    <section>
+      <h2>1. Carica la tabella</h2>
+      <label id="dropzone" class="dropzone" for="file-input">
+        <span>Trascina qui il file <strong>.xlsx</strong> o <strong>.tsv</strong>, oppure fai clic per sceglierlo</span>
+        <input id="file-input" type="file" accept=".xlsx,.tsv">
+      </label>
+      <p id="file-name" class="muted"></p>
+    </section>
+
+    <section id="step-sheets" hidden>
+      <h2>2. Scegli la pipeline per ogni scheda</h2>
+      <div id="sheets"></div>
+      <button id="validate" type="button" class="primary">Valida</button>
+    </section>
+
+    <section id="step-report" hidden>
+      <h2>3. Report</h2>
+      <div id="report"></div>
+    </section>
+  </main>
+
+  <footer>
+    <p>Ogni messaggio riporta un codice (es. E04, W03) spiegato nel manuale del wet lab.</p>
+  </footer>
+
+  <script type="application/json" id="py-sources">__PY_SOURCES__</script>
+  <script src="https://cdn.jsdelivr.net/pyodide/v0.27.7/full/pyodide.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
