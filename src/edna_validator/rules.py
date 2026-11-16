@@ -216,17 +216,25 @@ def _is_plain_space(char: str) -> bool:
     return char.isspace() and char not in LAYOUT_BREAKING_CHARS
 
 
-def spaces_in_paths(ds: Dataset, pipeline: Pipeline) -> list[Issue]:
-    """E06: space (of any kind) inside a path."""
+def _file_name(path: str) -> str:
+    """Return the last component of a path (the file name)."""
+    return path.rsplit("/", 1)[-1]
+
+
+def spaces_in_file_names(ds: Dataset, pipeline: Pipeline) -> list[Issue]:
+    """E06: space (of any kind) in the file name; spaces in folder names are accepted."""
     groups = _grouped(
-        ds, pipeline.file_columns, lambda value: any(_is_plain_space(c) for c in value)
+        ds,
+        pipeline.file_columns,
+        lambda value: any(_is_plain_space(c) for c in _file_name(value)),
     )
     return [
         Issue.create(
             "E06",
             ds.name,
-            f"Il percorso '{value}' contiene spazi ({_bad_chars(value, _is_plain_space)}): "
-            "rinomina file/cartelle sul server senza spazi e aggiorna la tabella.",
+            f"Il nome del file '{_file_name(value)}' contiene spazi "
+            f"({_bad_chars(_file_name(value), _is_plain_space)}): rinomina il file sul server "
+            "senza spazi (ad esempio con '_') e aggiorna il percorso nella tabella.",
             rows,
             column,
             value,
@@ -332,33 +340,6 @@ def duplicate_combinations(ds: Dataset, pipeline: Pipeline) -> list[Issue]:
     return issues
 
 
-def repeated_files(ds: Dataset, pipeline: Pipeline) -> list[Issue]:
-    """E11: same file on more than one row, also across columns (no demultiplexing)."""
-    if pipeline.demultiplex:
-        return []
-    usage: dict[str, list[tuple[int, str]]] = {}
-    for number, column, value in _cells(ds, pipeline.file_columns):
-        usage.setdefault(value, []).append((number, column))
-    issues = []
-    for value, places in usage.items():
-        rows = sorted({number for number, _ in places})
-        if len(rows) < 2:
-            continue
-        columns = sorted({column for _, column in places})
-        issues.append(
-            Issue.create(
-                "E11",
-                ds.name,
-                f"Il file '{value}' compare in {len(rows)} righe: nelle pipeline senza "
-                "demultiplexing ogni file appartiene a un solo campione. Correggi i percorsi.",
-                rows,
-                ", ".join(columns),
-                value,
-            )
-        )
-    return issues
-
-
 def layout_breaking_cells(ds: Dataset, pipeline: Pipeline) -> list[Issue]:
     """E12: tab or line break inside a cell written to the TSV."""
     issues = []
@@ -417,6 +398,83 @@ def formulas_without_value(ds: Dataset, pipeline: Pipeline) -> list[Issue]:
             column,
         )
         for column, rows in sorted(groups.items())
+    ]
+
+
+def _disallowed_path_chars(path: str) -> list[tuple[int, str]]:
+    """Return ``(position, char)`` for the characters of a path that are not allowed.
+
+    Spaces are left to other rules: a plain space is accepted in folder names, any space
+    in the file name is E06, and tabs or line breaks are E12.
+    """
+    name_start = len(path) - len(_file_name(path))
+    found = []
+    for index, char in enumerate(path):
+        if char in PATH_ALLOWED_CHARS or char in LAYOUT_BREAKING_CHARS:
+            continue
+        if char == " " or (char.isspace() and index >= name_start):
+            continue
+        found.append((index + 1, char))
+    return found
+
+
+def disallowed_path_chars(ds: Dataset, pipeline: Pipeline) -> list[Issue]:
+    """E15: character not allowed in a path."""
+    groups = _grouped(ds, pipeline.file_columns, lambda value: bool(_disallowed_path_chars(value)))
+    issues = []
+    for (column, value), rows in groups.items():
+        found = ", ".join(
+            f"{_describe_char(char)} in posizione {position}"
+            for position, char in _disallowed_path_chars(value)
+        )
+        issues.append(
+            Issue.create(
+                "E15",
+                ds.name,
+                f"Il percorso '{value}' contiene caratteri non ammessi: {found}. Sono ammessi "
+                "solo lettere non accentate, cifre e i simboli _ - / + . (lo spazio solo nei "
+                "nomi delle cartelle). Rinomina file/cartelle sul server e aggiorna la tabella.",
+                rows,
+                column,
+                value,
+            )
+        )
+    return issues
+
+
+def _extension_problem(path: str) -> str | None:
+    """Describe what is wrong with the extension of a path, None if nothing (or E07)."""
+    if path.endswith(VALID_EXTENSIONS):
+        return None
+    lowered = path.lower()
+    if lowered.endswith(UNCOMPRESSED_EXTENSIONS):
+        return None
+    if lowered.endswith(VALID_EXTENSIONS):
+        return "l'estensione è scritta in maiuscolo: rinomina il file con estensione minuscola"
+    for extension in OTHER_COMPRESSION_EXTENSIONS:
+        if lowered.endswith(extension):
+            return f"la compressione {extension} non è quella attesa: ricomprimi il file con gzip"
+    if re.search(r"\.(fq|fastq)\.[^./]+$", lowered) or lowered.endswith((".gz", ".gzip")):
+        return "il file sembra un FASTQ compresso ma con un nome non standard: rinominalo"
+    return "l'estensione non è riconosciuta: verifica che sia un FASTQ compresso con gzip"
+
+
+def nonstandard_extensions(ds: Dataset, pipeline: Pipeline) -> list[Issue]:
+    """E16: extension other than ``.fq.gz`` / ``.fastq.gz``."""
+    groups = _grouped(
+        ds, pipeline.file_columns, lambda value: _extension_problem(value) is not None
+    )
+    return [
+        Issue.create(
+            "E16",
+            ds.name,
+            f"Il file '{value}' non termina con .fq.gz o .fastq.gz: "
+            f"{_extension_problem(value)} e aggiorna la tabella.",
+            rows,
+            column,
+            value,
+        )
+        for (column, value), rows in groups.items()
     ]
 
 
@@ -510,84 +568,6 @@ def case_only_samples(ds: Dataset, pipeline: Pipeline) -> list[Issue]:
     return issues
 
 
-def hyphens_in_paths(ds: Dataset, pipeline: Pipeline) -> list[Issue]:
-    """W04: hyphen in a path."""
-    groups = _grouped(ds, pipeline.file_columns, lambda value: "-" in value)
-    return [
-        Issue.create(
-            "W04",
-            ds.name,
-            f"Il percorso '{value}' contiene il trattino '-': sostituiscilo con '_' "
-            "rinominando file/cartelle sul server e aggiornando la tabella. Il validatore "
-            "non modifica i percorsi.",
-            rows,
-            column,
-            value,
-        )
-        for (column, value), rows in groups.items()
-    ]
-
-
-def _is_disallowed_path_char(char: str) -> bool:
-    return char not in PATH_ALLOWED_CHARS and char != "-" and not char.isspace()
-
-
-def disallowed_path_chars(ds: Dataset, pipeline: Pipeline) -> list[Issue]:
-    """W05: character not allowed in a path (hyphen and spaces have their own rules)."""
-    groups = _grouped(
-        ds, pipeline.file_columns, lambda value: any(_is_disallowed_path_char(c) for c in value)
-    )
-    return [
-        Issue.create(
-            "W05",
-            ds.name,
-            f"Il percorso '{value}' contiene caratteri non ammessi: "
-            f"{_bad_chars(value, _is_disallowed_path_char)}. Sono ammessi solo lettere non "
-            "accentate, cifre e i simboli _ / + . Verifica il percorso o rinomina sul server.",
-            rows,
-            column,
-            value,
-        )
-        for (column, value), rows in groups.items()
-    ]
-
-
-def _extension_problem(path: str) -> str | None:
-    """Describe what is wrong with the extension of a path, None if nothing (or E07)."""
-    if path.endswith(VALID_EXTENSIONS):
-        return None
-    lowered = path.lower()
-    if lowered.endswith(UNCOMPRESSED_EXTENSIONS):
-        return None
-    if lowered.endswith(VALID_EXTENSIONS):
-        return "l'estensione è scritta in maiuscolo: rinomina il file con estensione minuscola"
-    for extension in OTHER_COMPRESSION_EXTENSIONS:
-        if lowered.endswith(extension):
-            return f"la compressione {extension} non è quella attesa: ricomprimi il file con gzip"
-    if re.search(r"\.(fq|fastq)\.[^./]+$", lowered) or lowered.endswith((".gz", ".gzip")):
-        return "il file sembra un FASTQ compresso ma con un nome non standard: rinominalo"
-    return "l'estensione non è riconosciuta: verifica che sia un FASTQ compresso con gzip"
-
-
-def nonstandard_extensions(ds: Dataset, pipeline: Pipeline) -> list[Issue]:
-    """W06: extension other than ``.fq.gz`` / ``.fastq.gz``."""
-    groups = _grouped(
-        ds, pipeline.file_columns, lambda value: _extension_problem(value) is not None
-    )
-    return [
-        Issue.create(
-            "W06",
-            ds.name,
-            f"Il file '{value}' non termina con .fq.gz o .fastq.gz: "
-            f"{_extension_problem(value)} e aggiorna la tabella.",
-            rows,
-            column,
-            value,
-        )
-        for (column, value), rows in groups.items()
-    ]
-
-
 def converted_cells(ds: Dataset, pipeline: Pipeline) -> list[Issue]:
     """W07: cell of a text column stored by Excel as a number or a date."""
     return [
@@ -665,21 +645,19 @@ RULES: list[Rule] = [
     empty_normalized_samples,
     duplicate_samples,
     relative_paths,
-    spaces_in_paths,
+    spaces_in_file_names,
     uncompressed_fastq,
     identical_forward_reverse,
     invalid_adapters,
     duplicate_combinations,
-    repeated_files,
     layout_breaking_cells,
     converted_samples,
     formulas_without_value,
+    disallowed_path_chars,
+    nonstandard_extensions,
     empty_categories,
     similar_categories,
     case_only_samples,
-    hyphens_in_paths,
-    disallowed_path_chars,
-    nonstandard_extensions,
     converted_cells,
     category_summary,
     extra_columns,

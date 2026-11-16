@@ -112,11 +112,6 @@ class Variant:
     fmt: str = "tsv"
 
 
-def _e11(t: Table) -> None:
-    t.to_short()
-    t.set(3, "File_reverse", t.get(2, "File_forward"))
-
-
 def _e10(t: Table) -> None:
     t.set(3, "Forward", str(t.get(2, "Forward")).upper())
     t.set(3, "Reverse", t.get(2, "Reverse"))
@@ -128,17 +123,18 @@ VARIANTS = [
     Variant("E03", lambda t: t.set(4, "Sample", "--"), [4], "Sample"),
     Variant("E04", lambda t: t.set(3, "Sample", "Civ-B 2.2"), [2, 3], "Sample"),
     Variant("E05", lambda t: t.set(6, "File_reverse", "dati/x_2.fq.gz"), [6], "File_reverse"),
-    Variant("E06", lambda t: t.set(7, "File_forward", "/a b/x_1.fq.gz"), [7], "File_forward"),
+    Variant("E06", lambda t: t.set(7, "File_forward", "/a/x 1.fq.gz"), [7], "File_forward"),
     Variant("E07", lambda t: t.set(8, "File_forward", "/a/x_1.FASTQ"), [8], "File_forward"),
     Variant(
         "E08", lambda t: t.set(9, "File_reverse", t.get(9, "File_forward")), [9], "File_reverse"
     ),
     Variant("E09", lambda t: t.set(10, "Forward", "ACGTXACG"), [10], "Forward"),
     Variant("E10", _e10, [2, 3], None),
-    Variant("E11", _e11, [2, 3], "File_forward, File_reverse", pipeline="eDNA_short"),
     Variant("E12", lambda t: t.set(4, "Category", "Laghi\tcostieri"), [4], "Category"),
     Variant("E13", lambda t: t.set(5, "Sample", 1.10), [5], "Sample", fmt="xlsx"),
     Variant("E14", lambda t: t.set(5, "Forward", "=A1"), [5], "Forward", fmt="xlsx"),
+    Variant("E15", lambda t: t.set(6, "File_forward", "/a/è_1.fq.gz"), [6], "File_forward"),
+    Variant("E16", lambda t: t.set(6, "File_forward", "/a/x_1.fq.bz2"), [6], "File_forward"),
     Variant("W01", lambda t: t.set(5, "Category", ""), [5], "Category"),
     Variant(
         "W02",
@@ -147,9 +143,6 @@ VARIANTS = [
         "Category",
     ),
     Variant("W03", lambda t: t.set(2, "Sample", "civ b 2.1"), [2, 15], "Sample"),
-    Variant("W04", lambda t: t.set(6, "File_forward", "/a-b/x_1.fq.gz"), [6], "File_forward"),
-    Variant("W05", lambda t: t.set(6, "File_forward", "/a/è_1.fq.gz"), [6], "File_forward"),
-    Variant("W06", lambda t: t.set(6, "File_forward", "/a/x_1.fq.bz2"), [6], "File_forward"),
     Variant("W07", lambda t: t.set(5, "Category", 12), [5], "Category", fmt="xlsx"),
 ]
 

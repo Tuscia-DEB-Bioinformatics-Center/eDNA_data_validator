@@ -37,7 +37,7 @@ def test_every_rule_code_has_a_variant() -> None:
     from conftest import VARIANTS
 
     covered = {variant.code for variant in VARIANTS}
-    expected = {code for code in CODE_TITLES if code[0] in "EW"} - {"E00"}
+    expected = {code for code in CODE_TITLES if code[0] in "EW"} - {"E00", "E17"}
     assert covered == expected
 
 
@@ -119,12 +119,39 @@ def test_e10_not_raised_for_shared_files(table: Table) -> None:
     assert "E10" not in codes(table.validate())
 
 
-def test_e11_same_column(table: Table) -> None:
+def test_shared_files_are_accepted_without_demultiplexing(table: Table) -> None:
     table.to_short()
     table.set(5, "File_forward", table.get(2, "File_forward"))
-    issue = find(table.validate("eDNA_short"), "E11")[0]
-    assert issue.rows == [2, 5]
-    assert issue.column == "File_forward"
+    table.set(3, "File_reverse", table.get(2, "File_forward"))
+    result = table.validate("eDNA_short")
+    assert not codes(result, "error")
+    assert not codes(result, "warning") - {"W03"}
+    assert result.tsv is not None
+
+
+def test_e06_only_for_the_file_name(table: Table) -> None:
+    table.set(6, "File_forward", "/my data/run 1/x_1.fq.gz")
+    table.set(7, "File_forward", "/my data/x 1.fq.gz")
+    result = table.validate()
+    issues = find(result, "E06")
+    assert [issue.rows for issue in issues] == [[7]]
+    assert "'x 1.fq.gz'" in issues[0].message
+    assert "posizione 2" in issues[0].message
+    assert "E15" not in codes(result)
+
+
+def test_e06_invisible_space_in_the_file_name(table: Table) -> None:
+    table.set(6, "File_forward", "/a/x 1.fq.gz")
+    result = table.validate()
+    assert "U+00A0" in find(result, "E06")[0].message
+    assert "E15" not in codes(result)
+
+
+def test_e15_invisible_space_in_a_folder_name(table: Table) -> None:
+    table.set(6, "File_forward", "/a b/x_1.fq.gz")
+    result = table.validate()
+    assert "E06" not in codes(result)
+    assert "U+00A0 in posizione 3" in find(result, "E15")[0].message
 
 
 def test_single_end_pipelines(table: Table) -> None:
@@ -137,7 +164,7 @@ def test_single_end_pipelines(table: Table) -> None:
     table.set(3, "Forward", table.get(2, "Forward"))
     table.set(3, "Reverse", table.get(2, "Reverse"))
     assert find(table.validate("eDNA_single"), "E10")[0].rows == [2, 3]
-    assert find(table.validate("eDNA_single_short"), "E11")
+    assert not codes(table.validate("eDNA_single_short"), "error")
 
 
 def test_w01_assigns_default_category(table: Table) -> None:
@@ -157,21 +184,24 @@ def test_w02_levels(table: Table) -> None:
     assert not any("Mare" in value for value in values)
 
 
-def test_w05_excludes_hyphen_and_space(table: Table) -> None:
-    table.set(6, "File_forward", "/a-b c/x_1.fq.gz")
+def test_hyphens_and_folder_spaces_are_accepted(table: Table) -> None:
+    table.set(6, "File_forward", "/a-b c/x-1_1.fq.gz")
     result = table.validate()
-    assert "W05" not in codes(result)
-    assert {"W04", "E06"} <= codes(result)
+    assert not codes(result, "error")
+    assert not codes(result, "warning") - {"W03"}
+    assert "/a-b c/x-1_1.fq.gz" in result.tsv
 
 
-def test_w05_allows_plus_sign(table: Table) -> None:
+def test_e15_allows_plus_sign(table: Table) -> None:
     table.set(6, "File_forward", "/a/EUKA+16S/x_1.fq.gz")
-    assert "W05" not in codes(table.validate())
+    assert "E15" not in codes(table.validate())
 
 
-def test_w05_reports_character_and_position(table: Table) -> None:
+def test_e15_reports_character_and_position(table: Table) -> None:
     table.set(6, "File_forward", "/a/x#1.fq.gz")
-    assert "'#' in posizione 5" in find(table.validate(), "W05")[0].message
+    result = table.validate()
+    assert "'#' in posizione 5" in find(result, "E15")[0].message
+    assert result.tsv is None
 
 
 @pytest.mark.parametrize(
@@ -192,7 +222,7 @@ def test_w05_reports_character_and_position(table: Table) -> None:
         ("/a/x", "non è riconosciuta"),
     ],
 )
-def test_w06_messages(path: str, fragment: str | None) -> None:
+def test_e16_messages(path: str, fragment: str | None) -> None:
     problem = _extension_problem(path)
     if fragment is None:
         assert problem is None
@@ -200,11 +230,11 @@ def test_w06_messages(path: str, fragment: str | None) -> None:
         assert fragment in problem
 
 
-def test_e07_is_not_also_w06(table: Table) -> None:
+def test_e07_is_not_also_e16(table: Table) -> None:
     table.set(8, "File_forward", "/a/x_1.fq")
     result = table.validate()
     assert "E07" in codes(result)
-    assert "W06" not in codes(result)
+    assert "E16" not in codes(result)
 
 
 def test_i02_extra_columns(table: Table) -> None:

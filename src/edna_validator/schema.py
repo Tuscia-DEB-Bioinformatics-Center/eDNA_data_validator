@@ -28,8 +28,9 @@ CATEGORY_SIMILARITY_THRESHOLD = 0.90
 # E09: IUPAC nucleotide codes accepted in adapters (case-insensitive).
 ADAPTER_ALPHABET = "ACGTRYSWKMBDHVN"
 
-# W05: characters accepted in file paths. Hyphen and whitespace have their own rules.
-PATH_ALLOWED_CHARS = frozenset(string.ascii_letters + string.digits + "_/+.")
+# E15: characters accepted in file paths. A plain space is also accepted in folder names,
+# but not in the file name (E06).
+PATH_ALLOWED_CHARS = frozenset(string.ascii_letters + string.digits + "_-/+.")
 
 # E12: whitespace that would break the TSV layout when found inside a cell.
 LAYOUT_BREAKING_CHARS = frozenset("\t\n\r\v\f")
@@ -150,26 +151,24 @@ CODE_TITLES: dict[str, str] = {
     "E03": "Nome del campione vuoto dopo la normalizzazione",
     "E04": "Campione duplicato",
     "E05": "Percorso non assoluto",
-    "E06": "Spazio nel percorso",
+    "E06": "Spazio nel nome del file",
     "E07": "FASTQ non compresso",
     "E08": "File forward e reverse identici",
     "E09": "Carattere non valido nell'adattatore",
     "E10": "Combinazione di file e adattatori ripetuta",
-    "E11": "Stesso file in più righe",
     "E12": "Tabulazione o a capo dentro una cella",
     "E13": "Nome del campione convertito da Excel in numero o data",
     "E14": "Formula senza valore salvato",
+    "E15": "Carattere non ammesso nel percorso",
+    "E16": "Estensione del file non standard",
+    "E17": "Nome della scheda non utilizzabile per il file TSV",
     "W01": "Categoria vuota",
     "W02": "Categorie simili",
     "W03": "Campioni che differiscono solo per maiuscole/minuscole",
-    "W04": "Trattino nel percorso",
-    "W05": "Carattere non ammesso nel percorso",
-    "W06": "Estensione del file non standard",
     "W07": "Cella convertita da Excel in numero o data",
     "I01": "Riepilogo delle categorie",
     "I02": "Colonne extra ignorate",
     "I03": "Nomi dei campioni normalizzati",
     "I04": "Pipeline della scheda",
     "I05": "Scheda saltata",
-    "I06": "Nome del file TSV modificato",
 }

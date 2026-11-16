@@ -81,16 +81,39 @@ def test_workbook_end_to_end() -> None:
 
     first = by_name["Pool 1"]
     assert first.pipeline == "eDNA_short"
-    assert {i.code for i in first.issues if i.severity == "error"} == {"E13", "E14"}
+    assert {i.code for i in first.issues if i.severity == "error"} == {"E13", "E14", "E17"}
     assert "dedotta" in next(i for i in first.issues if i.code == "I04").message
 
     second = by_name["Pool_1"]
-    assert second.tsv == (
-        "Sample\tCategory\tFile_forward\tFile_reverse\nX\tLago\t/d/x_1.fq.gz\t/d/x_2.fq.gz\n"
-    )
-    assert (first.tsv_name, second.tsv_name) == ("Pool_1.tsv", "Pool_1_2.tsv")
-    assert "I06" in {i.code for i in second.issues}
+    assert {i.code for i in second.issues if i.severity == "error"} == {"E17"}
     assert "I02" in {i.code for i in second.issues}
+
+
+def test_e17_sheets_with_the_same_file_name() -> None:
+    result = validate_file(build_workbook(), "tabella.xlsx", "auto")
+    by_name = {sheet.sheet: sheet for sheet in result.sheets}
+    for name, other in (("Pool 1", "Pool_1"), ("Pool_1", "Pool 1")):
+        sheet = by_name[name]
+        issue = next(i for i in sheet.issues if i.code == "E17")
+        assert issue.severity == "error"
+        assert f"'{other}'" in issue.message
+        assert sheet.tsv is None
+        assert sheet.tsv_name is None
+    assert [i.severity for i in by_name["Pool_1"].issues] == sorted(
+        (i.severity for i in by_name["Pool_1"].issues),
+        key=["error", "warning", "info"].index,
+    )
+
+
+def test_e17_sheet_name_without_letters_or_digits() -> None:
+    workbook = openpyxl.Workbook()
+    sheet = workbook.active
+    sheet.title = "--"
+    sheet.append(HEADER)
+    sheet.append(["S1", "Lago", "/d/a_1.fq.gz", "/d/a_2.fq.gz"])
+    result = validate_file(save(workbook), "t.xlsx", "eDNA_short").sheets[0]
+    assert [i.code for i in result.issues if i.severity == "error"] == ["E17"]
+    assert result.tsv is None
 
 
 def test_skip_sheet_and_per_sheet_pipeline() -> None:
@@ -101,6 +124,13 @@ def test_skip_sheet_and_per_sheet_pipeline() -> None:
     assert by_name["Pool 1"].status == "skipped"
     assert by_name["Pool_1"].pipeline == "eDNA"
     assert by_name["Pool_1"].tsv_name == "Pool_1.tsv"
+    assert "E17" not in {i.code for i in by_name["Pool_1"].issues}
+
+    result = validate_file(build_workbook(), "tabella.xlsx", "auto", {"Pool 1": "skip"})
+    alone = next(sheet for sheet in result.sheets if sheet.sheet == "Pool_1")
+    assert alone.tsv == (
+        "Sample\tCategory\tFile_forward\tFile_reverse\nX\tLago\t/d/x_1.fq.gz\t/d/x_2.fq.gz\n"
+    )
     with pytest.raises(ValueError, match="Schede non presenti"):
         validate_file(build_workbook(), "tabella.xlsx", "auto", {"Inesistente": "eDNA"})
 

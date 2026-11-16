@@ -107,7 +107,7 @@ class SheetResult:
         n_samples: Number of data rows.
         issues: All issues of the sheet.
         tsv: Clean TSV content, None when the sheet has errors or was not validated.
-        tsv_name: Output file name for the TSV.
+        tsv_name: Output file name for the TSV, None when the sheet name cannot be used.
     """
 
     sheet: str

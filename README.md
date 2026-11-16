@@ -84,28 +84,28 @@ describes each one in detail, with examples and the way to fix the table.
 | E03 | Sample empty after normalisation |
 | E04 | Duplicated Sample (compared on normalised names) |
 | E05 | Path is not absolute |
-| E06 | Space in a path |
+| E06 | Space in the file name (spaces in folder names are accepted) |
 | E07 | Uncompressed FASTQ |
 | E08 | File_forward identical to File_reverse |
 | E09 | Invalid character in an adapter (only IUPAC nucleotide codes are accepted) |
 | E10 | Same combination of files and adapters on several rows (`eDNA`, `eDNA_single`) |
-| E11 | Same file on several rows (`eDNA_short`, `eDNA_single_short`) |
 | E12 | Tab or line break inside a cell |
 | E13 | Sample stored by the spreadsheet as a number or a date (the original text may be altered, e.g. `1.10` → `1.1`) |
 | E14 | Formula without a saved value |
+| E15 | Character not allowed in a path (allowed: unaccented letters, digits, `_ - / + .`) |
+| E16 | Extension other than `.fq.gz` / `.fastq.gz` |
+| E17 | Sheet name that cannot be used for the TSV file: empty after normalisation, or same file name as another sheet |
 | W01 | Empty Category, replaced by `Uncategorized` |
 | W02 | Similar categories |
 | W03 | Samples that differ only by letter case |
-| W04 | Hyphen in a path |
-| W05 | Character not allowed in a path |
-| W06 | Extension other than `.fq.gz` / `.fastq.gz` |
 | W07 | Cell of a column other than Sample stored by the spreadsheet as a number or a date |
 | I01 | Category summary |
 | I02 | Extra columns ignored |
 | I03 | Sample names changed by the normalisation |
 | I04 | Pipeline used for the sheet |
 | I05 | Sheet skipped |
-| I06 | TSV file name adjusted |
+
+The codes E11, W04, W05, W06 and I06 belonged to earlier versions and are no longer used.
 
 ## Development
 

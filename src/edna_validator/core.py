@@ -61,35 +61,39 @@ def _header(dataset: Dataset) -> list[str]:
 
 
 def _assign_tsv_names(sheets: list[SheetResult]) -> None:
-    """Give each validated sheet a unique output file name (I06 when adjusted)."""
-    used: set[str] = set()
-    for index, sheet in enumerate(sheets, start=1):
-        if sheet.status != "validated":
+    """Name the output file of each validated sheet after its normalised sheet name.
+
+    A sheet whose name is empty after the normalisation, or that would produce the same
+    file name as another sheet, gets an E17 error and no TSV.
+    """
+    validated = [sheet for sheet in sheets if sheet.status == "validated"]
+    groups: dict[str, list[SheetResult]] = {}
+    for sheet in validated:
+        groups.setdefault(normalize_sample(sheet.sheet).lower(), []).append(sheet)
+
+    for sheet in validated:
+        name = normalize_sample(sheet.sheet)
+        others = [other.sheet for other in groups[name.lower()] if other is not sheet]
+        if name and not others:
+            sheet.tsv_name = f"{name}.tsv"
             continue
-        natural = normalize_sample(sheet.sheet)
-        base = natural or f"scheda_{index}"
-        name, suffix = base, 2
-        while name.lower() in used:
-            name = f"{base}_{suffix}"
-            suffix += 1
-        used.add(name.lower())
-        sheet.tsv_name = f"{name}.tsv"
-        if name != natural:
-            reason = (
-                "il nome della scheda non contiene lettere o cifre"
-                if not natural
-                else "un'altra scheda produce lo stesso nome di file"
+        if not name:
+            message = (
+                f"Il nome '{sheet.sheet}' non contiene lettere o cifre: non è possibile dare "
+                "un nome al file TSV. Rinomina la scheda (o il file, se è un TSV) usando "
+                "lettere non accentate o cifre."
             )
-            sheet.issues.append(
-                Issue.create(
-                    "I06",
-                    sheet.sheet,
-                    f"Il file TSV di questa scheda si chiama '{sheet.tsv_name}' perché {reason}.",
-                    None,
-                    None,
-                    sheet.tsv_name,
-                )
+        else:
+            listing = ", ".join(f"'{other}'" for other in others)
+            message = (
+                f"La scheda '{sheet.sheet}' produrrebbe il file '{name}.tsv', lo stesso nome "
+                f"di file di {listing}: rinomina le schede in modo che i nomi restino diversi "
+                "anche dopo la normalizzazione (spazi, punti e trattini diventano '_'; "
+                "maiuscole e minuscole non contano)."
             )
+        sheet.issues.append(Issue.create("E17", sheet.sheet, message, None, None, sheet.sheet))
+        sheet.issues.sort(key=lambda issue: _SEVERITY_ORDER[issue.severity])
+        sheet.tsv = None
 
 
 def validate_file(
