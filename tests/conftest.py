@@ -14,7 +14,7 @@ import pytest
 from edna_validator.core import validate_file
 from edna_validator.models import SheetResult
 
-DATA_FILE = Path(__file__).parent / "data" / "EUKA_lug25.tsv"
+DATA_FILE = Path(__file__).parent / "data" / "valid_example.tsv"
 
 
 class Table:

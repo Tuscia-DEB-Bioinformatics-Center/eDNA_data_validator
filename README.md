@@ -6,8 +6,7 @@ one dataset per sheet) or a tab-separated file (`.tsv`), reports every problem i
 single pass and, for each valid dataset, generates the clean TSV file that the pipeline expects
 as input.
 
-Validation is entirely offline: only the content of the table is checked, the FASTQ files are
-never accessed.
+Only the content of the table is checked: the FASTQ files it refers to are never accessed.
 
 ## Features
 
@@ -59,6 +58,12 @@ python -m edna_validator table.xlsx --pipeline auto --out out/
 The exit code is 1 if any error is found and 0 otherwise. From the command line, TSV files are
 written even when warnings are present.
 
+The repository includes a valid table that can be used to try the tool:
+
+```bash
+python -m edna_validator tests/data/valid_example.tsv --pipeline eDNA
+```
+
 ## Output
 
 One TSV per valid sheet, named after the normalised sheet name. It contains only the columns of
@@ -67,6 +72,9 @@ and `Uncategorized` where the category is empty. Files are UTF-8 without BOM, ta
 with `\n` line endings.
 
 ## Issue codes
+
+Every message in the report carries a code. The table below summarises them; the user manual
+describes each one in detail, with examples and the way to fix the table.
 
 | Code | Meaning |
 |---|---|
@@ -83,7 +91,7 @@ with `\n` line endings.
 | E10 | Same combination of files and adapters on several rows (`eDNA`, `eDNA_single`) |
 | E11 | Same file on several rows (`eDNA_short`, `eDNA_single_short`) |
 | E12 | Tab or line break inside a cell |
-| E13 | Sample stored by the spreadsheet as a number or a date |
+| E13 | Sample stored by the spreadsheet as a number or a date (the original text may be altered, e.g. `1.10` → `1.1`) |
 | E14 | Formula without a saved value |
 | W01 | Empty Category, replaced by `Uncategorized` |
 | W02 | Similar categories |
@@ -91,7 +99,7 @@ with `\n` line endings.
 | W04 | Hyphen in a path |
 | W05 | Character not allowed in a path |
 | W06 | Extension other than `.fq.gz` / `.fastq.gz` |
-| W07 | Cell stored by the spreadsheet as a number or a date |
+| W07 | Cell of a column other than Sample stored by the spreadsheet as a number or a date |
 | I01 | Category summary |
 | I02 | Extra columns ignored |
 | I03 | Sample names changed by the normalisation |
@@ -116,7 +124,11 @@ later. In the browser it runs on Python 3.12 through Pyodide 0.27.7.
 | `src/edna_validator/` | Engine: schema, cleaning, readers, rules, report, writer, CLI |
 | `web/` | Web interface (plain HTML, CSS and JavaScript) |
 | `scripts/build_web.py` | Builds the static site |
-| `tests/` | Test suite and sample data |
+| `tests/` | Test suite |
+| `tests/data/valid_example.tsv` | Valid reference table (`eDNA` pipeline) from which the tests derive their broken variants |
+
+The workflow `.github/workflows/tests.yml` runs the linter, the format check and the test suite
+on every push and pull request, on any branch.
 
 ## Build
 
@@ -161,9 +173,3 @@ to GitHub Pages on every push to `main`. It must be enabled once in the reposito
 
 Thresholds and character sets (category similarity, characters allowed in paths, adapter
 alphabet, extensions) are constants in `schema.py`.
-
-## Known limitations
-
-- Rule **W07** and its strict counterpart **E13** are provisional and may change.
-- Double slashes (`//`) in paths are not checked.
-- The existence and integrity of the FASTQ files are outside the scope of the validator.

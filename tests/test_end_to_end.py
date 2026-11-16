@@ -28,10 +28,10 @@ EXPECTED_HEAD = (
 
 
 def test_valid_file_report(valid_bytes: bytes) -> None:
-    result = validate_file(valid_bytes, "EUKA_lug25.tsv", "eDNA")
+    result = validate_file(valid_bytes, "valid_example.tsv", "eDNA")
     assert not result.has_errors
     sheet = result.sheets[0]
-    assert sheet.sheet == "EUKA_lug25"
+    assert sheet.sheet == "valid_example"
     assert sheet.n_samples == 72
 
     warnings = [issue for issue in sheet.issues if issue.severity == "warning"]
@@ -47,9 +47,9 @@ def test_valid_file_report(valid_bytes: bytes) -> None:
 
 
 def test_valid_file_tsv_bytes(valid_bytes: bytes) -> None:
-    sheet = validate_file(valid_bytes, "EUKA_lug25.tsv", "eDNA").sheets[0]
+    sheet = validate_file(valid_bytes, "valid_example.tsv", "eDNA").sheets[0]
     output = sheet.tsv.encode("utf-8")
-    assert sheet.tsv_name == "EUKA_lug25.tsv"
+    assert sheet.tsv_name == "valid_example.tsv"
     assert output.startswith(EXPECTED_HEAD)
     assert not output.startswith(b"\xef\xbb\xbf")
     assert b"\r" not in output
@@ -57,12 +57,12 @@ def test_valid_file_tsv_bytes(valid_bytes: bytes) -> None:
 
 
 def test_auto_detection_matches_explicit_choice(valid_bytes: bytes) -> None:
-    sheet = validate_file(valid_bytes, "EUKA_lug25.tsv", "auto").sheets[0]
+    sheet = validate_file(valid_bytes, "valid_example.tsv", "auto").sheets[0]
     assert sheet.pipeline == "eDNA"
 
 
 def test_text_report_is_grouped(valid_bytes: bytes) -> None:
-    text = render_text(validate_file(valid_bytes, "EUKA_lug25.tsv", "eDNA"))
+    text = render_text(validate_file(valid_bytes, "valid_example.tsv", "eDNA"))
     assert "pipeline eDNA, 72 campioni, 0 errori, 1 warning" in text
     assert "W03 — Campioni che differiscono solo per maiuscole/minuscole (1)" in text
     assert "I03 — Nomi dei campioni normalizzati (72)" in text
@@ -74,12 +74,14 @@ def test_format_rows() -> None:
 
 
 def test_json_api(valid_bytes: bytes) -> None:
-    inspected = json.loads(inspect_json(valid_bytes, "EUKA_lug25.tsv"))
+    inspected = json.loads(inspect_json(valid_bytes, "valid_example.tsv"))
     assert inspected["sheets"][0]["suggested"] == "eDNA"
     assert inspected["sheets"][0]["n_rows"] == 72
     assert "error" in json.loads(inspect_json(b"x", "t.csv"))
 
-    payload = json.loads(validate_json(valid_bytes, "EUKA_lug25.tsv", '{"EUKA_lug25": "eDNA"}'))
+    payload = json.loads(
+        validate_json(valid_bytes, "valid_example.tsv", '{"valid_example": "eDNA"}')
+    )
     assert payload["has_errors"] is False
     assert payload["sheets"][0]["warnings"] == 1
     assert payload["report_text"].startswith("Report di validazione")
@@ -89,8 +91,8 @@ def test_cli_writes_report_and_tsv(tmp_path: Path, capsys: pytest.CaptureFixture
     code = main([str(DATA_FILE), "--pipeline", "eDNA", "--out", str(tmp_path)])
     assert code == 0
     assert "W03" in capsys.readouterr().out
-    assert (tmp_path / "EUKA_lug25.tsv").read_bytes().startswith(EXPECTED_HEAD)
-    assert (tmp_path / "EUKA_lug25_report.txt").read_text(encoding="utf-8").startswith("Report")
+    assert (tmp_path / "valid_example.tsv").read_bytes().startswith(EXPECTED_HEAD)
+    assert (tmp_path / "valid_example_report.txt").read_text(encoding="utf-8").startswith("Report")
 
 
 def test_cli_exit_code_and_json(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
@@ -107,7 +109,7 @@ def test_cli_exit_code_and_json(tmp_path: Path, capsys: pytest.CaptureFixture[st
 
 
 def test_zip(valid_bytes: bytes) -> None:
-    sheet = validate_file(valid_bytes, "EUKA_lug25.tsv", "eDNA").sheets[0]
+    sheet = validate_file(valid_bytes, "valid_example.tsv", "eDNA").sheets[0]
     archive = zipfile.ZipFile(io.BytesIO(build_zip({sheet.tsv_name: sheet.tsv})))
-    assert archive.namelist() == ["EUKA_lug25.tsv"]
-    assert archive.read("EUKA_lug25.tsv") == sheet.tsv.encode("utf-8")
+    assert archive.namelist() == ["valid_example.tsv"]
+    assert archive.read("valid_example.tsv") == sheet.tsv.encode("utf-8")
