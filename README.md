@@ -35,8 +35,10 @@ Column order is free and extra columns are ignored.
 ## Web interface
 
 1. Open the page published on GitHub Pages (or `dist/index.html`, see [Build](#build)).
-2. Drop the file, review the pipeline proposed for each sheet and press **Valida**.
-3. Read the report. A TSV can be downloaded for every sheet without errors; when a sheet has
+2. Choose the type of data once: the pipeline applies to every sheet of the file.
+3. Drop the file, tick the sheets that are not sample tables so that they are ignored, and press
+   **Valida**. A sheet whose columns suggest a different pipeline is highlighted.
+4. Read the report. A TSV can be downloaded for every sheet without errors; when a sheet has
    warnings, they must be acknowledged first.
 
 On first load the page downloads Pyodide and `openpyxl`, so an internet connection is required.

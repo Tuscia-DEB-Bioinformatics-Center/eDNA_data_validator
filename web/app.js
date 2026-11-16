@@ -76,9 +76,10 @@ async function callPython(expression, extra = {}) {
   return JSON.parse(py.runPython(expression));
 }
 
-function pipelineFor(paired, demuxDone) {
-  if (paired) return demuxDone ? "eDNA_short" : "eDNA";
-  return demuxDone ? "eDNA_single_short" : "eDNA_single";
+/** Pipeline chosen once for the whole file, null until the user answers. */
+function selectedPipeline() {
+  const checked = document.querySelector('input[name="pipeline"]:checked');
+  return checked ? checked.value : null;
 }
 
 async function loadFile(file) {
@@ -100,38 +101,44 @@ async function loadFile(file) {
       return;
     }
     renderSheetChoices(info.sheets);
-    setStatus("File letto: controlla la pipeline di ogni scheda e premi «Valida».", "ok");
+    setStatus(
+      selectedPipeline()
+        ? "File letto: controlla le schede e premi «Valida»."
+        : "File letto: scegli il tipo di dati al punto 1 e premi «Valida».",
+      "ok"
+    );
   } catch (error) {
     setStatus(`Errore durante la lettura del file: ${error.message}`, "error");
   }
 }
 
-function radioGroup(name, legend, options, selected, onChange) {
-  const group = el("fieldset", {}, el("legend", { text: legend }));
-  for (const [value, label] of options) {
-    const input = el("input", { type: "radio", name, value, checked: value === selected });
-    input.addEventListener("change", () => onChange(value));
-    group.append(el("label", {}, input, ` ${label}`));
+/** Update the per-sheet hints and the Valida button after any change of the choices. */
+function refreshChoices() {
+  const pipeline = selectedPipeline();
+  for (const sheet of state.sheets) {
+    if (!sheet.card) continue;
+    sheet.card.classList.toggle("disabled", sheet.skip);
+    const differs = pipeline !== null && !sheet.skip && sheet.suggested !== pipeline;
+    sheet.hint.hidden = !differs;
+    sheet.hint.textContent = differs
+      ? `Attenzione: dalle colonne questa scheda sembra di tipo ${sheet.suggested} (${sheet.reason}), ` +
+        `non ${pipeline}. Controlla la scelta al punto 1 oppure ignora la scheda.`
+      : "";
   }
-  return group;
+  $("validate").disabled = pipeline === null;
+  $("validate-hint").textContent =
+    pipeline === null ? "Per validare, scegli prima il tipo di dati al punto 1." : "";
 }
 
 function renderSheetChoices(sheets) {
-  state.sheets = sheets.map((sheet, index) => ({
-    ...sheet,
-    index,
-    paired: !sheet.suggested.includes("single"),
-    demuxDone: sheet.suggested.endsWith("_short"),
-    touched: false,
-    skip: false,
-  }));
+  state.sheets = sheets.map((sheet, index) => ({ ...sheet, index, skip: false }));
   const container = $("sheets");
   container.replaceChildren();
   for (const sheet of state.sheets) {
     const card = el("div", { class: "card" }, el("h3", { text: `Scheda «${sheet.sheet}»` }));
+    container.append(card);
     if (sheet.empty) {
       card.append(el("p", { class: "muted", text: "Scheda senza dati: verrà saltata." }));
-      container.append(card);
       continue;
     }
     card.append(
@@ -140,60 +147,31 @@ function renderSheetChoices(sheets) {
         text: `${sheet.n_rows} righe di dati. Colonne: ${sheet.columns.join(", ") || "nessuna"}.`,
       })
     );
-    const chosen = el("p", { class: "muted" });
-    const refresh = () => {
-      const name = pipelineFor(sheet.paired, sheet.demuxDone);
-      chosen.textContent = sheet.touched
-        ? `Pipeline scelta: ${name}.`
-        : `Pipeline proposta: ${name} — ${sheet.reason}.`;
-      card.classList.toggle("disabled", sheet.skip);
-    };
-    card.append(
-      radioGroup(
-        `reads-${sheet.index}`,
-        "Le letture sono paired-end (due file per campione) o single-end (un file)?",
-        [["paired", "Paired-end (due file)"], ["single", "Single-end (un file)"]],
-        sheet.paired ? "paired" : "single",
-        (value) => {
-          sheet.paired = value === "paired";
-          sheet.touched = true;
-          refresh();
-        }
-      ),
-      radioGroup(
-        `demux-${sheet.index}`,
-        "Il laboratorio ha già eseguito il demultiplexing?",
-        [["no", "No, lo esegue la pipeline (servono gli adattatori)"], ["yes", "Sì, già eseguito"]],
-        sheet.demuxDone ? "yes" : "no",
-        (value) => {
-          sheet.demuxDone = value === "yes";
-          sheet.touched = true;
-          refresh();
-        }
-      )
-    );
+    sheet.card = card;
+    sheet.hint = el("p", { class: "hint", hidden: true });
     const skip = el("input", { type: "checkbox" });
     skip.addEventListener("change", () => {
       sheet.skip = skip.checked;
-      refresh();
+      refreshChoices();
     });
     card.append(
-      chosen,
+      sheet.hint,
       el("label", { class: "inline" }, skip, " Ignora questa scheda (non è una tabella di campioni)")
     );
-    refresh();
-    container.append(card);
   }
+  refreshChoices();
   $("step-sheets").hidden = false;
 }
 
 async function validate() {
+  const pipeline = selectedPipeline();
+  if (pipeline === null) {
+    refreshChoices();
+    return;
+  }
   const choices = {};
   for (const sheet of state.sheets) {
-    if (sheet.empty) continue;
-    if (sheet.skip) choices[sheet.sheet] = "skip";
-    else if (sheet.touched) choices[sheet.sheet] = pipelineFor(sheet.paired, sheet.demuxDone);
-    else choices[sheet.sheet] = "auto";
+    if (!sheet.empty) choices[sheet.sheet] = sheet.skip ? "skip" : pipeline;
   }
   setStatus("Validazione in corso…");
   try {
@@ -398,6 +376,7 @@ function setupInputs() {
     window.addEventListener(type, (event) => event.preventDefault());
   }
   $("validate").addEventListener("click", validate);
+  $("pipeline-choice").addEventListener("change", refreshChoices);
 }
 
 setupInputs();

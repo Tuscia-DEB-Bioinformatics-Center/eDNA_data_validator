@@ -17,7 +17,26 @@
     <p id="status" class="status" role="status">Preparazione del validatore…</p>
 
     <section>
-      <h2>1. Carica la tabella</h2>
+      <h2>1. Scegli il tipo di dati</h2>
+      <fieldset id="pipeline-choice" class="choice">
+        <legend>Che tipo di dati contiene il file? La risposta vale per tutte le schede.</legend>
+        <label><input type="radio" name="pipeline" value="eDNA">
+          Due file per campione (paired-end), demultiplexing da eseguire
+          <span class="muted">— pipeline eDNA, servono gli adattatori</span></label>
+        <label><input type="radio" name="pipeline" value="eDNA_short">
+          Due file per campione (paired-end), demultiplexing già eseguito
+          <span class="muted">— pipeline eDNA_short</span></label>
+        <label><input type="radio" name="pipeline" value="eDNA_single">
+          Un file per campione (single-end), demultiplexing da eseguire
+          <span class="muted">— pipeline eDNA_single, servono gli adattatori</span></label>
+        <label><input type="radio" name="pipeline" value="eDNA_single_short">
+          Un file per campione (single-end), demultiplexing già eseguito
+          <span class="muted">— pipeline eDNA_single_short</span></label>
+      </fieldset>
+    </section>
+
+    <section>
+      <h2>2. Carica la tabella</h2>
       <label id="dropzone" class="dropzone" for="file-input">
         <span>Trascina qui il file <strong>.xlsx</strong> o <strong>.tsv</strong>, oppure fai clic per sceglierlo</span>
         <input id="file-input" type="file" accept=".xlsx,.tsv">
@@ -26,13 +45,14 @@
     </section>
 
     <section id="step-sheets" hidden>
-      <h2>2. Scegli la pipeline per ogni scheda</h2>
+      <h2>3. Controlla le schede e valida</h2>
       <div id="sheets"></div>
       <button id="validate" type="button" class="primary">Valida</button>
+      <p id="validate-hint" class="muted"></p>
     </section>
 
     <section id="step-report" hidden>
-      <h2>3. Report</h2>
+      <h2>4. Report</h2>
       <div id="report"></div>
     </section>
   </main>
