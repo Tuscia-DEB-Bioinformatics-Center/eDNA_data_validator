@@ -15,7 +15,7 @@ from pathlib import Path
 from .models import Issue
 from .readers import ReadError, read_tsv
 from .report import format_rows
-from .schema import CODE_TITLES, PIPELINES, detect_pipeline
+from .schema import PIPELINES, detect_pipeline
 
 SERVER_COMMAND = "controllo-server"
 REPORT_NAME = "controllo_server_report.txt"
@@ -136,32 +136,31 @@ def check_tsv(data: bytes, filename: str, radice: Path, prefisso: str) -> tuple[
     return issues, checked
 
 
-def render_server_report(filename: str, issues: list[Issue], checked: int) -> str:
+def render_server_report(
+    filename: str, issues: list[Issue], checked: int, prefisso: str = ""
+) -> str:
     """Render the outcome of the server check for one TSV file as plain text.
 
     Args:
         filename: TSV file name.
         issues: E17/E18 issues found in the file.
         checked: Number of distinct paths checked.
+        prefisso: Server path prefix given to the check, shown for E18.
 
     Returns:
         The Italian text of the report, ending with a newline.
     """
-    lines = [f"Controllo sul server — file: {filename}", f"Percorsi controllati: {checked}", ""]
+    if not issues:
+        return f"{filename} - OK: tutti i file ({checked}) sono presenti sul server.\n"
+    lines = [f"{filename} - PROBLEMI: {len(issues)} file su {checked} non trovati sul server"]
     for issue in sorted(issues, key=lambda item: (item.code, min(item.rows or [0]))):
-        lines.append(
-            f"{issue.code} — {CODE_TITLES.get(issue.code, '')}: {issue.message} "
-            f"Righe: {format_rows(issue.rows)}."
-        )
-    if issues:
-        lines.append("")
-        lines.append(
-            f"Esito: {len(issues)} {'problema' if len(issues) == 1 else 'problemi'} sul server. "
-            "Il TSV non va usato finché i file "
-            "mancanti non sono sistemati."
-        )
-    else:
-        lines.append("Esito: tutti i file indicati nel TSV sono presenti sul server.")
+        where = f"colonna {issue.column}, righe {format_rows(issue.rows)}"
+        if issue.code == "E18":
+            lines.append(
+                f"  E18 FUORI PERCORSO  {issue.value}  ({where}): non inizia con '{prefisso}'"
+            )
+        else:
+            lines.append(f"  E17 MANCA  {issue.value}  ({where})")
     return "\n".join(lines) + "\n"
 
 
@@ -216,7 +215,7 @@ def run(argv: list[str]) -> int:
         parser.error(str(exc))
 
     reports: list[str] = []
-    failed_files = 0
+    failed: list[str] = []
     for file in files:
         try:
             data = file.read_bytes()
@@ -226,16 +225,25 @@ def run(argv: list[str]) -> int:
         try:
             issues, checked = check_tsv(data, file.name, args.radice, args.prefisso)
         except ReadError as exc:
-            print(f"{file.name}: {exc}", file=sys.stderr)
-            failed_files += 1
+            reports.append(f"{file.name} - PROBLEMA: file TSV non leggibile ({exc})\n")
+            failed.append(file.name)
             continue
         if issues:
-            failed_files += 1
-        reports.append(render_server_report(file.name, issues, checked))
+            failed.append(file.name)
+        reports.append(render_server_report(file.name, issues, checked, args.prefisso))
 
-    files_word = "file controllato" if len(files) == 1 else "file controllati"
-    summary = f"Totale: {len(files)} {files_word}, {failed_files} con problemi."
-    report = ("\n" + "=" * 60 + "\n").join(reports) + "\n" + summary + "\n"
+    ok = len(files) - len(failed)
+    summary = [f"RIEPILOGO: {len(files)} tabelle controllate, {ok} OK, {len(failed)} con problemi."]
+    if failed:
+        summary.append("Tabelle da controllare: " + ", ".join(failed))
+        summary.append(
+            "Cosa fare: verificare sul server che i file mancanti esistano (comando ls con il "
+            "percorso indicato) e correggere il percorso nella tabella, oppure ripristinare "
+            "il file."
+        )
+    else:
+        summary.append("Tutti i file indicati nelle tabelle sono presenti sul server.")
+    report = "\n".join(reports) + "\n" + "\n".join(summary) + "\n"
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8")
     sys.stdout.write(report)
@@ -244,4 +252,4 @@ def run(argv: list[str]) -> int:
     out_dir.mkdir(parents=True, exist_ok=True)
     (out_dir / REPORT_NAME).write_text(report, encoding="utf-8", newline="\n")
 
-    return 1 if failed_files else 0
+    return 1 if failed else 0
