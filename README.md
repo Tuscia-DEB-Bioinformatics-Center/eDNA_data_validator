@@ -6,7 +6,7 @@ one dataset per sheet) or a tab-separated file (`.tsv`), reports every problem i
 single pass and, for each valid dataset, generates the clean TSV file that the pipeline expects
 as input.
 
-Only the content of the table is checked: the FASTQ files it refers to are never accessed.
+Only the content of the table is checked: the FASTQ files it refers to are never accessed, except by the optional server check (see "Server check" below).
 
 ## Features
 
