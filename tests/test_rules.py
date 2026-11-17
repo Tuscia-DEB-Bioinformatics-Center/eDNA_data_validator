@@ -37,7 +37,8 @@ def test_every_rule_code_has_a_variant() -> None:
     from conftest import VARIANTS
 
     covered = {variant.code for variant in VARIANTS}
-    expected = {code for code in CODE_TITLES if code[0] in "EW"} - {"E00", "E17"}
+    # E18/E19 come from the server check (test_server_check.py), not from the rules.
+    expected = {code for code in CODE_TITLES if code[0] in "EW"} - {"E00", "E17", "E18", "E19"}
     assert covered == expected
 
 

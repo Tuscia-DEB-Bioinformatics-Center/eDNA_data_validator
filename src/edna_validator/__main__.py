@@ -9,6 +9,8 @@ from pathlib import Path
 from .core import validate_file
 from .report import render_json, render_text
 from .schema import AUTO, PIPELINES, SKIP
+from .server_check import SERVER_COMMAND
+from .server_check import run as run_server_check
 
 
 def _parse_sheet_options(options: list[str], parser: argparse.ArgumentParser) -> dict[str, str]:
@@ -25,12 +27,20 @@ def _parse_sheet_options(options: list[str], parser: argparse.ArgumentParser) ->
 def main(argv: list[str] | None = None) -> int:
     """Run the command line interface.
 
+    ``controllo-server`` runs the cross-check of the FASTQ paths against the server; any other
+    arguments run the validator.
+
     Args:
         argv: Arguments without the program name; defaults to ``sys.argv[1:]``.
 
     Returns:
         The process exit code: 1 if the validation found errors, 0 otherwise.
     """
+    if argv is None:
+        argv = sys.argv[1:]
+    if argv and argv[0] == SERVER_COMMAND:
+        return run_server_check(argv[1:])
+
     choices = [*PIPELINES, AUTO]
     parser = argparse.ArgumentParser(
         prog="python -m edna_validator",

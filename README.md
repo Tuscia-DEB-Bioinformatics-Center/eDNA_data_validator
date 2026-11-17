@@ -66,6 +66,26 @@ The repository includes a valid table that can be used to try the tool:
 python -m edna_validator tests/data/valid_example.tsv --pipeline eDNA
 ```
 
+### Server check
+
+`controllo-server` checks that the FASTQ files listed in validated TSV files exist on the server.
+It only runs on a computer that can see the reads folder (for example through a mapped network
+drive over the VPN). The validator itself never accesses the server.
+
+```bash
+python -m edna_validator controllo-server out --radice "Z:\reads" --prefisso /archive/project/reads
+```
+
+| Option | Meaning |
+|---|---|
+| `targets` | One or more TSV files, a folder (all `.tsv` files in it) or a pattern such as `out\*.tsv`. |
+| `--radice DIR` | Required. Local folder that corresponds to the reads root on the server. |
+| `--prefisso PATH` | Start of the server paths to replace with `--radice`. If omitted, the whole path is searched under `--radice`. |
+| `--out DIR` | Where to save `controllo_server_report.txt`. Default: the folder of the first file. |
+
+The exit code is 0 if all files are present, 1 if some are missing (E18 or E19) and 2 if the
+check cannot run (unreachable folder, unreadable file, wrong arguments).
+
 ## Output
 
 One TSV per valid sheet, named after the normalised sheet name. It contains only the columns of
@@ -97,6 +117,8 @@ describes each one in detail, with examples and the way to fix the table.
 | E15 | Character not allowed in a path (allowed: unaccented letters, digits, `_ - / + .`) |
 | E16 | Extension other than `.fq.gz` / `.fastq.gz` |
 | E17 | Sheet name that cannot be used for the TSV file: empty after normalisation, or same file name as another sheet |
+| E18 | FASTQ listed in a TSV file that does not exist on the server (server check only) |
+| E19 | FASTQ path that does not start with the prefix given to the server check (server check only) |
 | W01 | Empty Category, replaced by `Uncategorized` |
 | W02 | Similar categories |
 | W03 | Samples that differ only by letter case |

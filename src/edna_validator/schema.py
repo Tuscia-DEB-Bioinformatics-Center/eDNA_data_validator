@@ -162,6 +162,8 @@ CODE_TITLES: dict[str, str] = {
     "E15": "Carattere non ammesso nel percorso",
     "E16": "Estensione del file non standard",
     "E17": "Nome della scheda non utilizzabile per il file TSV",
+    "E18": "File non trovato sul server",
+    "E19": "Percorso fuori dalla radice indicata",
     "W01": "Categoria vuota",
     "W02": "Categorie simili",
     "W03": "Campioni che differiscono solo per maiuscole/minuscole",
