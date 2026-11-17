@@ -64,7 +64,7 @@ def test_missing_file_is_e18_with_row(reads_root: Path) -> None:
     issues, _ = check_tsv(DATA_FILE.read_bytes(), "tabella.tsv", reads_root, PREFIX)
 
     codes = {issue.code for issue in issues}
-    assert codes == {"E18"}
+    assert codes == {"E17"}
     e18 = [issue for issue in issues if issue.value == missing]
     assert len(e18) == 1
     assert e18[0].column == "File_forward"
@@ -74,7 +74,7 @@ def test_missing_file_is_e18_with_row(reads_root: Path) -> None:
 def test_path_outside_prefix_is_e19(reads_root: Path) -> None:
     issues, checked = check_tsv(DATA_FILE.read_bytes(), "tabella.tsv", reads_root, "/altra/radice")
     assert checked > 0
-    assert issues and {issue.code for issue in issues} == {"E19"}
+    assert issues and {issue.code for issue in issues} == {"E18"}
 
 
 def test_without_prefix_whole_path_is_searched(tmp_path: Path) -> None:
@@ -125,7 +125,7 @@ def test_command_line_exit_codes_and_report(tmp_path: Path, reads_root: Path) ->
     first = _table_paths()[0]
     server_to_local(first, reads_root, PREFIX).unlink()  # type: ignore[union-attr]
     assert main(args) == 1
-    assert "E18" in report.read_text(encoding="utf-8")
+    assert "E17" in report.read_text(encoding="utf-8")
 
 
 def test_command_line_unreachable_root_returns_2(tmp_path: Path) -> None:

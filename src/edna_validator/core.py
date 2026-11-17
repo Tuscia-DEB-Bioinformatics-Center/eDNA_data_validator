@@ -64,7 +64,7 @@ def _assign_tsv_names(sheets: list[SheetResult]) -> None:
     """Name the output file of each validated sheet after its normalised sheet name.
 
     A sheet whose name is empty after the normalisation, or that would produce the same
-    file name as another sheet, gets an E17 error and no TSV.
+    file name as another sheet, gets an E16 error and no TSV.
     """
     validated = [sheet for sheet in sheets if sheet.status == "validated"]
     groups: dict[str, list[SheetResult]] = {}
@@ -91,7 +91,7 @@ def _assign_tsv_names(sheets: list[SheetResult]) -> None:
                 "anche dopo la normalizzazione (spazi, punti e trattini diventano '_'; "
                 "maiuscole e minuscole non contano)."
             )
-        sheet.issues.append(Issue.create("E17", sheet.sheet, message, None, None, sheet.sheet))
+        sheet.issues.append(Issue.create("E16", sheet.sheet, message, None, None, sheet.sheet))
         sheet.issues.sort(key=lambda issue: _SEVERITY_ORDER[issue.severity])
         sheet.tsv = None
 

@@ -28,11 +28,11 @@ CATEGORY_SIMILARITY_THRESHOLD = 0.90
 # E09: IUPAC nucleotide codes accepted in adapters (case-insensitive).
 ADAPTER_ALPHABET = "ACGTRYSWKMBDHVN"
 
-# E15: characters accepted in file paths. A plain space is also accepted in folder names,
+# E14: characters accepted in file paths. A plain space is also accepted in folder names,
 # but not in the file name (E06).
 PATH_ALLOWED_CHARS = frozenset(string.ascii_letters + string.digits + "_-/+.")
 
-# E12: whitespace that would break the TSV layout when found inside a cell.
+# E11: whitespace that would break the TSV layout when found inside a cell.
 LAYOUT_BREAKING_CHARS = frozenset("\t\n\r\v\f")
 
 VALID_EXTENSIONS = (".fq.gz", ".fastq.gz")
@@ -156,18 +156,18 @@ CODE_TITLES: dict[str, str] = {
     "E08": "File forward e reverse identici",
     "E09": "Carattere non valido nell'adattatore",
     "E10": "Combinazione di file e adattatori ripetuta",
-    "E12": "Tabulazione o a capo dentro una cella",
-    "E13": "Nome del campione convertito da Excel in numero o data",
-    "E14": "Formula senza valore salvato",
-    "E15": "Carattere non ammesso nel percorso",
-    "E16": "Estensione del file non standard",
-    "E17": "Nome della scheda non utilizzabile per il file TSV",
-    "E18": "File non trovato sul server",
-    "E19": "Percorso fuori dalla radice indicata",
+    "E11": "Tabulazione o a capo dentro una cella",
+    "E12": "Nome del campione convertito da Excel in numero o data",
+    "E13": "Formula senza valore salvato",
+    "E14": "Carattere non ammesso nel percorso",
+    "E15": "Estensione del file non standard",
+    "E16": "Nome della scheda non utilizzabile per il file TSV",
+    "E17": "File non trovato sul server",
+    "E18": "Percorso fuori dalla radice indicata",
     "W01": "Categoria vuota",
     "W02": "Categorie simili",
     "W03": "Campioni che differiscono solo per maiuscole/minuscole",
-    "W07": "Cella convertita da Excel in numero o data",
+    "W04": "Cella convertita da Excel in numero o data",
     "I01": "Riepilogo delle categorie",
     "I02": "Colonne extra ignorate",
     "I03": "Nomi dei campioni normalizzati",

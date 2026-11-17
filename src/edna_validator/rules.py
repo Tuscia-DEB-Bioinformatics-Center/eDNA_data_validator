@@ -341,7 +341,7 @@ def duplicate_combinations(ds: Dataset, pipeline: Pipeline) -> list[Issue]:
 
 
 def layout_breaking_cells(ds: Dataset, pipeline: Pipeline) -> list[Issue]:
-    """E12: tab or line break inside a cell written to the TSV."""
+    """E11: tab or line break inside a cell written to the TSV."""
     issues = []
     for column in pipeline.columns:
         rows = [
@@ -352,7 +352,7 @@ def layout_breaking_cells(ds: Dataset, pipeline: Pipeline) -> list[Issue]:
         if rows:
             issues.append(
                 Issue.create(
-                    "E12",
+                    "E11",
                     ds.name,
                     f"Celle della colonna '{column}' con una tabulazione o un a capo interno "
                     "(Alt+Invio in Excel): rimuovili, altrimenti il file TSV risulta spezzato.",
@@ -364,10 +364,10 @@ def layout_breaking_cells(ds: Dataset, pipeline: Pipeline) -> list[Issue]:
 
 
 def converted_samples(ds: Dataset, pipeline: Pipeline) -> list[Issue]:
-    """E13: Sample stored by Excel as a number or a date."""
+    """E12: Sample stored by Excel as a number or a date."""
     return [
         Issue.create(
-            "E13",
+            "E12",
             ds.name,
             f"Excel ha salvato il nome del campione come {cell.kind} ('{cell.text}'): il "
             "testo originale può essere stato alterato (es. 1.10 diventa 1.1). Imposta la "
@@ -382,14 +382,14 @@ def converted_samples(ds: Dataset, pipeline: Pipeline) -> list[Issue]:
 
 
 def formulas_without_value(ds: Dataset, pipeline: Pipeline) -> list[Issue]:
-    """E14: formula whose result was never saved in the file."""
+    """E13: formula whose result was never saved in the file."""
     groups: dict[str, list[int]] = {}
     for number, column in ds.formula_cells:
         if column in pipeline.columns:
             groups.setdefault(column, []).append(number)
     return [
         Issue.create(
-            "E14",
+            "E13",
             ds.name,
             f"Celle della colonna '{column}' con una formula di cui il file non contiene il "
             "risultato: apri il file in Excel e salvalo di nuovo, oppure sostituisci le "
@@ -405,7 +405,7 @@ def _disallowed_path_chars(path: str) -> list[tuple[int, str]]:
     """Return ``(position, char)`` for the characters of a path that are not allowed.
 
     Spaces are left to other rules: a plain space is accepted in folder names, any space
-    in the file name is E06, and tabs or line breaks are E12.
+    in the file name is E06, and tabs or line breaks are E11.
     """
     name_start = len(path) - len(_file_name(path))
     found = []
@@ -419,7 +419,7 @@ def _disallowed_path_chars(path: str) -> list[tuple[int, str]]:
 
 
 def disallowed_path_chars(ds: Dataset, pipeline: Pipeline) -> list[Issue]:
-    """E15: character not allowed in a path."""
+    """E14: character not allowed in a path."""
     groups = _grouped(ds, pipeline.file_columns, lambda value: bool(_disallowed_path_chars(value)))
     issues = []
     for (column, value), rows in groups.items():
@@ -429,7 +429,7 @@ def disallowed_path_chars(ds: Dataset, pipeline: Pipeline) -> list[Issue]:
         )
         issues.append(
             Issue.create(
-                "E15",
+                "E14",
                 ds.name,
                 f"Il percorso '{value}' contiene caratteri non ammessi: {found}. Sono ammessi "
                 "solo lettere non accentate, cifre e i simboli _ - / + . (lo spazio solo nei "
@@ -460,13 +460,13 @@ def _extension_problem(path: str) -> str | None:
 
 
 def nonstandard_extensions(ds: Dataset, pipeline: Pipeline) -> list[Issue]:
-    """E16: extension other than ``.fq.gz`` / ``.fastq.gz``."""
+    """E15: extension other than ``.fq.gz`` / ``.fastq.gz``."""
     groups = _grouped(
         ds, pipeline.file_columns, lambda value: _extension_problem(value) is not None
     )
     return [
         Issue.create(
-            "E16",
+            "E15",
             ds.name,
             f"Il file '{value}' non termina con .fq.gz o .fastq.gz: "
             f"{_extension_problem(value)} e aggiorna la tabella.",
@@ -569,10 +569,10 @@ def case_only_samples(ds: Dataset, pipeline: Pipeline) -> list[Issue]:
 
 
 def converted_cells(ds: Dataset, pipeline: Pipeline) -> list[Issue]:
-    """W07: cell of a text column stored by Excel as a number or a date."""
+    """W04: cell of a text column stored by Excel as a number or a date."""
     return [
         Issue.create(
-            "W07",
+            "W04",
             ds.name,
             f"Excel ha salvato la cella della colonna '{cell.column}' come {cell.kind}: è "
             f"stata letta come '{cell.text}'. Verifica che sia il valore voluto; per evitarlo "

@@ -37,8 +37,8 @@ def test_every_rule_code_has_a_variant() -> None:
     from conftest import VARIANTS
 
     covered = {variant.code for variant in VARIANTS}
-    # E18/E19 come from the server check (test_server_check.py), not from the rules.
-    expected = {code for code in CODE_TITLES if code[0] in "EW"} - {"E00", "E17", "E18", "E19"}
+    # E17/E18 come from the server check (test_server_check.py), not from the rules.
+    expected = {code for code in CODE_TITLES if code[0] in "EW"} - {"E00", "E16", "E17", "E18"}
     assert covered == expected
 
 
@@ -138,21 +138,21 @@ def test_e06_only_for_the_file_name(table: Table) -> None:
     assert [issue.rows for issue in issues] == [[7]]
     assert "'x 1.fq.gz'" in issues[0].message
     assert "posizione 2" in issues[0].message
-    assert "E15" not in codes(result)
+    assert "E14" not in codes(result)
 
 
 def test_e06_invisible_space_in_the_file_name(table: Table) -> None:
     table.set(6, "File_forward", "/a/x 1.fq.gz")
     result = table.validate()
     assert "U+00A0" in find(result, "E06")[0].message
-    assert "E15" not in codes(result)
+    assert "E14" not in codes(result)
 
 
 def test_e15_invisible_space_in_a_folder_name(table: Table) -> None:
     table.set(6, "File_forward", "/a b/x_1.fq.gz")
     result = table.validate()
     assert "E06" not in codes(result)
-    assert "U+00A0 in posizione 3" in find(result, "E15")[0].message
+    assert "U+00A0 in posizione 3" in find(result, "E14")[0].message
 
 
 def test_single_end_pipelines(table: Table) -> None:
@@ -195,13 +195,13 @@ def test_hyphens_and_folder_spaces_are_accepted(table: Table) -> None:
 
 def test_e15_allows_plus_sign(table: Table) -> None:
     table.set(6, "File_forward", "/a/EUKA+16S/x_1.fq.gz")
-    assert "E15" not in codes(table.validate())
+    assert "E14" not in codes(table.validate())
 
 
 def test_e15_reports_character_and_position(table: Table) -> None:
     table.set(6, "File_forward", "/a/x#1.fq.gz")
     result = table.validate()
-    assert "'#' in posizione 5" in find(result, "E15")[0].message
+    assert "'#' in posizione 5" in find(result, "E14")[0].message
     assert result.tsv is None
 
 
@@ -235,7 +235,7 @@ def test_e07_is_not_also_e16(table: Table) -> None:
     table.set(8, "File_forward", "/a/x_1.fq")
     result = table.validate()
     assert "E07" in codes(result)
-    assert "E16" not in codes(result)
+    assert "E15" not in codes(result)
 
 
 def test_i02_extra_columns(table: Table) -> None:

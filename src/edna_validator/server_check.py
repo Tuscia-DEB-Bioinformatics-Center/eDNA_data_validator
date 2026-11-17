@@ -85,7 +85,7 @@ def check_tsv(data: bytes, filename: str, radice: Path, prefisso: str) -> tuple[
         prefisso: Server path prefix to replace with ``radice``; empty for none.
 
     Returns:
-        A tuple ``(issues, checked)``: the E18/E19 issues and the number of distinct paths checked.
+        A tuple ``(issues, checked)``: the E17/E18 issues and the number of distinct paths checked.
 
     Raises:
         ReadError: If the TSV cannot be read.
@@ -110,7 +110,7 @@ def check_tsv(data: bytes, filename: str, radice: Path, prefisso: str) -> tuple[
             if local is None:
                 issues.append(
                     Issue.create(
-                        "E19",
+                        "E18",
                         dataset.name,
                         f"Il percorso '{value}' non inizia con '{prefisso}': non si può cercare "
                         "sotto la radice indicata. Controlla il percorso nella tabella oppure "
@@ -123,7 +123,7 @@ def check_tsv(data: bytes, filename: str, radice: Path, prefisso: str) -> tuple[
             elif not local.is_file():
                 issues.append(
                     Issue.create(
-                        "E18",
+                        "E17",
                         dataset.name,
                         f"Il file '{value}' non esiste sul server: nella cartella controllata "
                         f"('{local}') non c'è. Verifica che il percorso sia quello reale, che il "
@@ -141,7 +141,7 @@ def render_server_report(filename: str, issues: list[Issue], checked: int) -> st
 
     Args:
         filename: TSV file name.
-        issues: E18/E19 issues found in the file.
+        issues: E17/E18 issues found in the file.
         checked: Number of distinct paths checked.
 
     Returns:

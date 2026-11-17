@@ -130,11 +130,11 @@ VARIANTS = [
     ),
     Variant("E09", lambda t: t.set(10, "Forward", "ACGTXACG"), [10], "Forward"),
     Variant("E10", _e10, [2, 3], None),
-    Variant("E12", lambda t: t.set(4, "Category", "Laghi\tcostieri"), [4], "Category"),
-    Variant("E13", lambda t: t.set(5, "Sample", 1.10), [5], "Sample", fmt="xlsx"),
-    Variant("E14", lambda t: t.set(5, "Forward", "=A1"), [5], "Forward", fmt="xlsx"),
-    Variant("E15", lambda t: t.set(6, "File_forward", "/a/è_1.fq.gz"), [6], "File_forward"),
-    Variant("E16", lambda t: t.set(6, "File_forward", "/a/x_1.fq.bz2"), [6], "File_forward"),
+    Variant("E11", lambda t: t.set(4, "Category", "Laghi\tcostieri"), [4], "Category"),
+    Variant("E12", lambda t: t.set(5, "Sample", 1.10), [5], "Sample", fmt="xlsx"),
+    Variant("E13", lambda t: t.set(5, "Forward", "=A1"), [5], "Forward", fmt="xlsx"),
+    Variant("E14", lambda t: t.set(6, "File_forward", "/a/è_1.fq.gz"), [6], "File_forward"),
+    Variant("E15", lambda t: t.set(6, "File_forward", "/a/x_1.fq.bz2"), [6], "File_forward"),
     Variant("W01", lambda t: t.set(5, "Category", ""), [5], "Category"),
     Variant(
         "W02",
@@ -143,7 +143,7 @@ VARIANTS = [
         "Category",
     ),
     Variant("W03", lambda t: t.set(2, "Sample", "civ b 2.1"), [2, 15], "Sample"),
-    Variant("W07", lambda t: t.set(5, "Category", 12), [5], "Category", fmt="xlsx"),
+    Variant("W04", lambda t: t.set(5, "Category", 12), [5], "Category", fmt="xlsx"),
 ]
 
 

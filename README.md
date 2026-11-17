@@ -111,25 +111,23 @@ describes each one in detail, with examples and the way to fix the table.
 | E08 | File_forward identical to File_reverse |
 | E09 | Invalid character in an adapter (only IUPAC nucleotide codes are accepted) |
 | E10 | Same combination of files and adapters on several rows (`eDNA`, `eDNA_single`) |
-| E12 | Tab or line break inside a cell |
-| E13 | Sample stored by the spreadsheet as a number or a date (the original text may be altered, e.g. `1.10` → `1.1`) |
-| E14 | Formula without a saved value |
-| E15 | Character not allowed in a path (allowed: unaccented letters, digits, `_ - / + .`) |
-| E16 | Extension other than `.fq.gz` / `.fastq.gz` |
-| E17 | Sheet name that cannot be used for the TSV file: empty after normalisation, or same file name as another sheet |
-| E18 | FASTQ listed in a TSV file that does not exist on the server (server check only) |
-| E19 | FASTQ path that does not start with the prefix given to the server check (server check only) |
+| E11 | Tab or line break inside a cell |
+| E12 | Sample stored by the spreadsheet as a number or a date (the original text may be altered, e.g. `1.10` → `1.1`) |
+| E13 | Formula without a saved value |
+| E14 | Character not allowed in a path (allowed: unaccented letters, digits, `_ - / + .`) |
+| E15 | Extension other than `.fq.gz` / `.fastq.gz` |
+| E16 | Sheet name that cannot be used for the TSV file: empty after normalisation, or same file name as another sheet |
+| E17 | FASTQ listed in a TSV file that does not exist on the server (server check only) |
+| E18 | FASTQ path that does not start with the prefix given to the server check (server check only) |
 | W01 | Empty Category, replaced by `Uncategorized` |
 | W02 | Similar categories |
 | W03 | Samples that differ only by letter case |
-| W07 | Cell of a column other than Sample stored by the spreadsheet as a number or a date |
+| W04 | Cell of a column other than Sample stored by the spreadsheet as a number or a date |
 | I01 | Category summary |
 | I02 | Extra columns ignored |
 | I03 | Sample names changed by the normalisation |
 | I04 | Pipeline used for the sheet |
 | I05 | Sheet skipped |
-
-The codes E11, W04, W05, W06 and I06 belonged to earlier versions and are no longer used.
 
 ## Development
 

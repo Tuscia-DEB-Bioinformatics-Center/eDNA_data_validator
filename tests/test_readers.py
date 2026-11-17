@@ -81,11 +81,11 @@ def test_workbook_end_to_end() -> None:
 
     first = by_name["Pool 1"]
     assert first.pipeline == "eDNA_short"
-    assert {i.code for i in first.issues if i.severity == "error"} == {"E13", "E14", "E17"}
+    assert {i.code for i in first.issues if i.severity == "error"} == {"E12", "E13", "E16"}
     assert "dedotta" in next(i for i in first.issues if i.code == "I04").message
 
     second = by_name["Pool_1"]
-    assert {i.code for i in second.issues if i.severity == "error"} == {"E17"}
+    assert {i.code for i in second.issues if i.severity == "error"} == {"E16"}
     assert "I02" in {i.code for i in second.issues}
 
 
@@ -94,7 +94,7 @@ def test_e17_sheets_with_the_same_file_name() -> None:
     by_name = {sheet.sheet: sheet for sheet in result.sheets}
     for name, other in (("Pool 1", "Pool_1"), ("Pool_1", "Pool 1")):
         sheet = by_name[name]
-        issue = next(i for i in sheet.issues if i.code == "E17")
+        issue = next(i for i in sheet.issues if i.code == "E16")
         assert issue.severity == "error"
         assert f"'{other}'" in issue.message
         assert sheet.tsv is None
@@ -112,7 +112,7 @@ def test_e17_sheet_name_without_letters_or_digits() -> None:
     sheet.append(HEADER)
     sheet.append(["S1", "Lago", "/d/a_1.fq.gz", "/d/a_2.fq.gz"])
     result = validate_file(save(workbook), "t.xlsx", "eDNA_short").sheets[0]
-    assert [i.code for i in result.issues if i.severity == "error"] == ["E17"]
+    assert [i.code for i in result.issues if i.severity == "error"] == ["E16"]
     assert result.tsv is None
 
 
@@ -124,7 +124,7 @@ def test_skip_sheet_and_per_sheet_pipeline() -> None:
     assert by_name["Pool 1"].status == "skipped"
     assert by_name["Pool_1"].pipeline == "eDNA"
     assert by_name["Pool_1"].tsv_name == "Pool_1.tsv"
-    assert "E17" not in {i.code for i in by_name["Pool_1"].issues}
+    assert "E16" not in {i.code for i in by_name["Pool_1"].issues}
 
     result = validate_file(build_workbook(), "tabella.xlsx", "auto", {"Pool 1": "skip"})
     alone = next(sheet for sheet in result.sheets if sheet.sheet == "Pool_1")
@@ -144,7 +144,7 @@ def test_date_and_integer_cells() -> None:
     sheet.append(["S1", dt.datetime(2025, 7, 1), "/d/a_1.fq.gz", "/d/a_2.fq.gz"])
     sheet.append(["S2", 7, "/d/b_1.fq.gz", "/d/b_2.fq.gz"])
     result = validate_file(save(workbook), "t.xlsx", "eDNA_short").sheets[0]
-    assert [(i.rows, i.value) for i in result.issues if i.code == "W07"] == [
+    assert [(i.rows, i.value) for i in result.issues if i.code == "W04"] == [
         ([2], "2025-07-01"),
         ([3], "7"),
     ]
