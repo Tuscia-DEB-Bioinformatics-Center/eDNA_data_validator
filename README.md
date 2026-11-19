@@ -70,7 +70,15 @@ python -m edna_validator tests/data/valid_example.tsv --pipeline eDNA
 
 `controllo-server` checks that the FASTQ files listed in validated TSV files exist on the server.
 It only runs on a computer that can see the reads folder (for example through a mapped network
-drive over the VPN). The validator itself never accesses the server.
+drive). The validator itself never accesses the server.
+
+For users who work on the server itself there is a standalone Bash script,
+[`web/controllo_server.sh`](web/controllo_server.sh), also offered as a download on the web page.
+It needs only `bash` and `awk` (no Python, no installation): copy it to the server together with
+the TSV files, then run `cd FOLDER && bash controllo_server.sh`. It prints the same report as
+`controllo-server` (`OK` / `E17 MANCA` / summary), checks every distinct path with `-f`, accepts
+Windows line endings and a BOM, and never modifies anything. The exit code is 0 if all files are
+present, 1 if some are missing and 2 if the check cannot run.
 
 ```bash
 python -m edna_validator controllo-server out --radice "Z:\reads" --prefisso /archive/project/reads

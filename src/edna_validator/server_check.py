@@ -2,7 +2,7 @@
 
 The validator itself never reads the server. This check runs only from the command line
 (``python -m edna_validator controllo-server ...``) on a computer that can see the reads
-folder, for example through a mapped network drive over the VPN.
+folder, for example through a mapped network drive.
 """
 
 from __future__ import annotations
@@ -127,7 +127,7 @@ def check_tsv(data: bytes, filename: str, radice: Path, prefisso: str) -> tuple[
                         dataset.name,
                         f"Il file '{value}' non esiste sul server: nella cartella controllata "
                         f"('{local}') non c'è. Verifica che il percorso sia quello reale, che il "
-                        "file non sia stato spostato o rinominato e che la VPN sia attiva.",
+                        "file non sia stato spostato o rinominato.",
                         rows,
                         column,
                         value,
@@ -205,7 +205,7 @@ def run(argv: list[str]) -> int:
     if not args.radice.is_dir():
         print(
             f"La cartella {args.radice} non è raggiungibile. Controlla che l'unità di rete sia "
-            "collegata e che la VPN sia attiva.",
+            "collegata.",
             file=sys.stderr,
         )
         return 2

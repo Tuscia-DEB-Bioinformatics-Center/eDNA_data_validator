@@ -18,6 +18,8 @@ WEB = ROOT / "web"
 DIST = ROOT / "dist"
 PLACEHOLDER = "__PY_SOURCES__"
 ASSETS = ("app.js", "style.css")
+# Files copied unchanged next to the page (offered as downloads).
+DOWNLOADS = ("controllo_server.sh",)
 # Modules not needed in the browser.
 EXCLUDED = {"__main__.py"}
 
@@ -53,6 +55,8 @@ def build() -> Path:
         if reference not in page:
             raise SystemExit(f"Reference to {name} not found in web/index.html")
         page = page.replace(reference, f'"{name}?v={digest}"')
+        shutil.copyfile(WEB / name, DIST / name)
+    for name in DOWNLOADS:
         shutil.copyfile(WEB / name, DIST / name)
     index.write_text(page, encoding="utf-8", newline="\n")
     (DIST / ".nojekyll").write_text("", encoding="utf-8")
