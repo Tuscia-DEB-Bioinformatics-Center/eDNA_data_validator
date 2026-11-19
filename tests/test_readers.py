@@ -144,7 +144,7 @@ def test_date_and_integer_cells() -> None:
     sheet.append(["S1", dt.datetime(2025, 7, 1), "/d/a_1.fq.gz", "/d/a_2.fq.gz"])
     sheet.append(["S2", 7, "/d/b_1.fq.gz", "/d/b_2.fq.gz"])
     result = validate_file(save(workbook), "t.xlsx", "eDNA_short").sheets[0]
-    assert [(i.rows, i.value) for i in result.issues if i.code == "W04"] == [
+    assert [(i.rows, i.value) for i in result.issues if i.code == "W03"] == [
         ([2], "2025-07-01"),
         ([3], "7"),
     ]

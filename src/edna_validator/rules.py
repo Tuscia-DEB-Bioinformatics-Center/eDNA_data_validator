@@ -195,52 +195,55 @@ def duplicate_samples(ds: Dataset, pipeline: Pipeline) -> list[Issue]:
     return issues
 
 
+def case_only_samples(ds: Dataset, pipeline: Pipeline) -> list[Issue]:
+    """E05: samples whose normalised names differ only by letter case."""
+    groups: dict[str, dict[str, list[tuple[int, str]]]] = {}
+    for number, original, normalized in _samples(ds):
+        if normalized:
+            groups.setdefault(normalized.lower(), {}).setdefault(normalized, []).append(
+                (number, original)
+            )
+    issues = []
+    for variants in groups.values():
+        if len(variants) < 2:
+            continue
+        members = [member for group in variants.values() for member in group]
+        listing = ", ".join(f"'{original}' (riga {number})" for number, original in members)
+        issues.append(
+            Issue.create(
+                "E05",
+                ds.name,
+                f"Campioni che differiscono solo per maiuscole/minuscole: {listing}. I nomi dei "
+                "campioni devono essere distinti anche ignorando le maiuscole: rinomina o "
+                "elimina i duplicati.",
+                [number for number, _ in members],
+                SAMPLE,
+                " / ".join(variants),
+            )
+        )
+    return issues
+
+
 def relative_paths(ds: Dataset, pipeline: Pipeline) -> list[Issue]:
-    """E05: path that does not start with ``/``."""
+    """E06: path that is not absolute, i.e. does not start with ``/``."""
     groups = _grouped(ds, pipeline.file_columns, lambda value: not value.startswith("/"))
     return [
         Issue.create(
-            "E05",
+            "E06",
             ds.name,
-            f"Il percorso '{value}' non è assoluto: deve iniziare con '/' e indicare la "
-            "posizione completa del file sul server.",
+            f"Il percorso '{value}' non è assoluto: deve iniziare con '/' e indicare "
+            "la posizione del file sul server a partire dalla radice.",
             rows,
             column,
             value,
         )
         for (column, value), rows in groups.items()
     ]
-
-
-def _is_plain_space(char: str) -> bool:
-    return char.isspace() and char not in LAYOUT_BREAKING_CHARS
 
 
 def _file_name(path: str) -> str:
     """Return the last component of a path (the file name)."""
     return path.rsplit("/", 1)[-1]
-
-
-def spaces_in_file_names(ds: Dataset, pipeline: Pipeline) -> list[Issue]:
-    """E06: space (of any kind) in the file name; spaces in folder names are accepted."""
-    groups = _grouped(
-        ds,
-        pipeline.file_columns,
-        lambda value: any(_is_plain_space(c) for c in _file_name(value)),
-    )
-    return [
-        Issue.create(
-            "E06",
-            ds.name,
-            f"Il nome del file '{_file_name(value)}' contiene spazi "
-            f"({_bad_chars(_file_name(value), _is_plain_space)}): rinomina il file sul server "
-            "senza spazi (ad esempio con '_') e aggiorna il percorso nella tabella.",
-            rows,
-            column,
-            value,
-        )
-        for (column, value), rows in groups.items()
-    ]
 
 
 def uncompressed_fastq(ds: Dataset, pipeline: Pipeline) -> list[Issue]:
@@ -404,18 +407,14 @@ def formulas_without_value(ds: Dataset, pipeline: Pipeline) -> list[Issue]:
 def _disallowed_path_chars(path: str) -> list[tuple[int, str]]:
     """Return ``(position, char)`` for the characters of a path that are not allowed.
 
-    Spaces are left to other rules: a plain space is accepted in folder names, any space
-    in the file name is E06, and tabs or line breaks are E11.
+    A plain space is accepted everywhere in the path; tabs and line breaks are left to E11.
+    The slash only separates the parts of the path, so it is never part of a file name.
     """
-    name_start = len(path) - len(_file_name(path))
-    found = []
-    for index, char in enumerate(path):
-        if char in PATH_ALLOWED_CHARS or char in LAYOUT_BREAKING_CHARS:
-            continue
-        if char == " " or (char.isspace() and index >= name_start):
-            continue
-        found.append((index + 1, char))
-    return found
+    return [
+        (index, char)
+        for index, char in enumerate(path, start=1)
+        if char != " " and char not in PATH_ALLOWED_CHARS and char not in LAYOUT_BREAKING_CHARS
+    ]
 
 
 def disallowed_path_chars(ds: Dataset, pipeline: Pipeline) -> list[Issue]:
@@ -431,9 +430,10 @@ def disallowed_path_chars(ds: Dataset, pipeline: Pipeline) -> list[Issue]:
             Issue.create(
                 "E14",
                 ds.name,
-                f"Il percorso '{value}' contiene caratteri non ammessi: {found}. Sono ammessi "
-                "solo lettere non accentate, cifre e i simboli _ - / + . (lo spazio solo nei "
-                "nomi delle cartelle). Rinomina file/cartelle sul server e aggiorna la tabella.",
+                f"Il percorso '{value}' contiene caratteri non ammessi: {found}. Nei nomi di "
+                "file e cartelle sono ammessi solo lettere non accentate, cifre, spazi e i "
+                "simboli _ - + . (la barra / serve solo a separare le parti del percorso). "
+                "Rinomina file/cartelle sul server e aggiorna la tabella.",
                 rows,
                 column,
                 value,
@@ -444,13 +444,9 @@ def disallowed_path_chars(ds: Dataset, pipeline: Pipeline) -> list[Issue]:
 
 def _extension_problem(path: str) -> str | None:
     """Describe what is wrong with the extension of a path, None if nothing (or E07)."""
-    if path.endswith(VALID_EXTENSIONS):
-        return None
     lowered = path.lower()
-    if lowered.endswith(UNCOMPRESSED_EXTENSIONS):
+    if lowered.endswith((*VALID_EXTENSIONS, *UNCOMPRESSED_EXTENSIONS)):
         return None
-    if lowered.endswith(VALID_EXTENSIONS):
-        return "l'estensione è scritta in maiuscolo: rinomina il file con estensione minuscola"
     for extension in OTHER_COMPRESSION_EXTENSIONS:
         if lowered.endswith(extension):
             return f"la compressione {extension} non è quella attesa: ricomprimi il file con gzip"
@@ -460,7 +456,7 @@ def _extension_problem(path: str) -> str | None:
 
 
 def nonstandard_extensions(ds: Dataset, pipeline: Pipeline) -> list[Issue]:
-    """E15: extension other than ``.fq.gz`` / ``.fastq.gz``."""
+    """E15: extension other than ``.fq.gz`` / ``.fastq.gz`` (letter case is ignored)."""
     groups = _grouped(
         ds, pipeline.file_columns, lambda value: _extension_problem(value) is not None
     )
@@ -468,7 +464,7 @@ def nonstandard_extensions(ds: Dataset, pipeline: Pipeline) -> list[Issue]:
         Issue.create(
             "E15",
             ds.name,
-            f"Il file '{value}' non termina con .fq.gz o .fastq.gz: "
+            f"Il file '{value}' non termina con .fq.gz o .fastq.gz (maiuscole o minuscole): "
             f"{_extension_problem(value)} e aggiorna la tabella.",
             rows,
             column,
@@ -540,39 +536,11 @@ def similar_categories(ds: Dataset, pipeline: Pipeline) -> list[Issue]:
     return issues
 
 
-def case_only_samples(ds: Dataset, pipeline: Pipeline) -> list[Issue]:
-    """W03: samples whose normalised names differ only by letter case."""
-    groups: dict[str, dict[str, list[tuple[int, str]]]] = {}
-    for number, original, normalized in _samples(ds):
-        if normalized:
-            groups.setdefault(normalized.lower(), {}).setdefault(normalized, []).append(
-                (number, original)
-            )
-    issues = []
-    for variants in groups.values():
-        if len(variants) < 2:
-            continue
-        members = [member for group in variants.values() for member in group]
-        listing = ", ".join(f"'{original}' (riga {number})" for number, original in members)
-        issues.append(
-            Issue.create(
-                "W03",
-                ds.name,
-                f"Campioni che differiscono solo per maiuscole/minuscole: {listing}. Conferma "
-                "se è un refuso oppure se sono davvero campioni distinti.",
-                [number for number, _ in members],
-                SAMPLE,
-                " / ".join(variants),
-            )
-        )
-    return issues
-
-
 def converted_cells(ds: Dataset, pipeline: Pipeline) -> list[Issue]:
-    """W04: cell of a text column stored by Excel as a number or a date."""
+    """W03: cell of a text column stored by Excel as a number or a date."""
     return [
         Issue.create(
-            "W04",
+            "W03",
             ds.name,
             f"Excel ha salvato la cella della colonna '{cell.column}' come {cell.kind}: è "
             f"stata letta come '{cell.text}'. Verifica che sia il valore voluto; per evitarlo "
@@ -644,8 +612,8 @@ RULES: list[Rule] = [
     empty_required_cells,
     empty_normalized_samples,
     duplicate_samples,
+    case_only_samples,
     relative_paths,
-    spaces_in_file_names,
     uncompressed_fastq,
     identical_forward_reverse,
     invalid_adapters,
@@ -657,7 +625,6 @@ RULES: list[Rule] = [
     nonstandard_extensions,
     empty_categories,
     similar_categories,
-    case_only_samples,
     converted_cells,
     category_summary,
     extra_columns,

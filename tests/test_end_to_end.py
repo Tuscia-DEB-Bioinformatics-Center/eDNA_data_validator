@@ -34,9 +34,7 @@ def test_valid_file_report(valid_bytes: bytes) -> None:
     assert sheet.sheet == "valid_example"
     assert sheet.n_samples == 72
 
-    warnings = [issue for issue in sheet.issues if issue.severity == "warning"]
-    assert [(w.code, w.rows) for w in warnings] == [("W03", [26, 31])]
-    assert "'Elba b 1.2'" in warnings[0].message and "'Elba B 1.2'" in warnings[0].message
+    assert not [issue for issue in sheet.issues if issue.severity != "info"]
 
     summary = next(issue for issue in sheet.issues if issue.code == "I01")
     assert summary.value == "Mare: 66; Laghi costieri: 6"
@@ -63,8 +61,8 @@ def test_auto_detection_matches_explicit_choice(valid_bytes: bytes) -> None:
 
 def test_text_report_is_grouped(valid_bytes: bytes) -> None:
     text = render_text(validate_file(valid_bytes, "valid_example.tsv", "eDNA"))
-    assert "pipeline eDNA, 72 campioni, 0 errori, 1 warning" in text
-    assert "W03 — Campioni che differiscono solo per maiuscole/minuscole (1)" in text
+    assert "pipeline eDNA, 72 campioni, 0 errori, 0 warning" in text
+    assert "I01 — Riepilogo delle categorie (1)" in text
     assert "I03 — Nomi dei campioni normalizzati (72)" in text
 
 
@@ -83,14 +81,14 @@ def test_json_api(valid_bytes: bytes) -> None:
         validate_json(valid_bytes, "valid_example.tsv", '{"valid_example": "eDNA"}')
     )
     assert payload["has_errors"] is False
-    assert payload["sheets"][0]["warnings"] == 1
+    assert payload["sheets"][0]["warnings"] == 0
     assert payload["report_text"].startswith("Report di validazione")
 
 
 def test_cli_writes_report_and_tsv(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
     code = main([str(DATA_FILE), "--pipeline", "eDNA", "--out", str(tmp_path)])
     assert code == 0
-    assert "W03" in capsys.readouterr().out
+    assert "I01" in capsys.readouterr().out
     assert (tmp_path / "valid_example.tsv").read_bytes().startswith(EXPECTED_HEAD)
     assert (tmp_path / "valid_example_report.txt").read_text(encoding="utf-8").startswith("Report")
 
@@ -103,7 +101,7 @@ def test_cli_exit_code_and_json(tmp_path: Path, capsys: pytest.CaptureFixture[st
     payload = json.loads(capsys.readouterr().out)
     assert payload["sheets"][0]["pipeline"] == "eDNA_single_short"
     assert [i["code"] for i in payload["sheets"][0]["issues"] if i["severity"] == "error"] == [
-        "E05"
+        "E06"
     ]
     assert not (tmp_path / "out" / "rotta.tsv").exists()
 

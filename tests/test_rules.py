@@ -81,7 +81,7 @@ def test_e01_duplicate_header_does_not_cascade(table: Table) -> None:
     assert [(i.code, i.column) for i in result.issues if i.severity == "error"] == [
         ("E01", "File_forward")
     ]
-    assert not codes(result, "warning") - {"W03"}
+    assert not codes(result, "warning")
 
 
 def test_misspelled_header_keeps_the_intended_pipeline(table: Table) -> None:
@@ -126,33 +126,34 @@ def test_shared_files_are_accepted_without_demultiplexing(table: Table) -> None:
     table.set(3, "File_reverse", table.get(2, "File_forward"))
     result = table.validate("eDNA_short")
     assert not codes(result, "error")
-    assert not codes(result, "warning") - {"W03"}
+    assert not codes(result, "warning")
     assert result.tsv is not None
 
 
-def test_e06_only_for_the_file_name(table: Table) -> None:
+def test_spaces_are_accepted_in_file_and_folder_names(table: Table) -> None:
     table.set(6, "File_forward", "/my data/run 1/x_1.fq.gz")
     table.set(7, "File_forward", "/my data/x 1.fq.gz")
     result = table.validate()
-    issues = find(result, "E06")
-    assert [issue.rows for issue in issues] == [[7]]
-    assert "'x 1.fq.gz'" in issues[0].message
-    assert "posizione 2" in issues[0].message
-    assert "E14" not in codes(result)
+    assert not codes(result, "error")
+    assert "/my data/x 1.fq.gz" in result.tsv
 
 
-def test_e06_invisible_space_in_the_file_name(table: Table) -> None:
+def test_e14_invisible_space_in_the_file_name(table: Table) -> None:
     table.set(6, "File_forward", "/a/x 1.fq.gz")
-    result = table.validate()
-    assert "U+00A0" in find(result, "E06")[0].message
-    assert "E14" not in codes(result)
+    issue = find(table.validate(), "E14")[0]
+    assert "U+00A0 in posizione 5" in issue.message
 
 
-def test_e15_invisible_space_in_a_folder_name(table: Table) -> None:
+def test_e14_invisible_space_in_a_folder_name(table: Table) -> None:
     table.set(6, "File_forward", "/a b/x_1.fq.gz")
     result = table.validate()
-    assert "E06" not in codes(result)
     assert "U+00A0 in posizione 3" in find(result, "E14")[0].message
+
+
+def test_e14_message_says_slash_only_separates(table: Table) -> None:
+    table.set(6, "File_forward", "/a/x#1.fq.gz")
+    message = find(table.validate(), "E14")[0].message
+    assert "la barra / serve solo a separare" in message
 
 
 def test_single_end_pipelines(table: Table) -> None:
@@ -189,16 +190,16 @@ def test_hyphens_and_folder_spaces_are_accepted(table: Table) -> None:
     table.set(6, "File_forward", "/a-b c/x-1_1.fq.gz")
     result = table.validate()
     assert not codes(result, "error")
-    assert not codes(result, "warning") - {"W03"}
+    assert not codes(result, "warning")
     assert "/a-b c/x-1_1.fq.gz" in result.tsv
 
 
-def test_e15_allows_plus_sign(table: Table) -> None:
+def test_e14_allows_plus_sign(table: Table) -> None:
     table.set(6, "File_forward", "/a/EUKA+16S/x_1.fq.gz")
     assert "E14" not in codes(table.validate())
 
 
-def test_e15_reports_character_and_position(table: Table) -> None:
+def test_e14_reports_character_and_position(table: Table) -> None:
     table.set(6, "File_forward", "/a/x#1.fq.gz")
     result = table.validate()
     assert "'#' in posizione 5" in find(result, "E14")[0].message
@@ -211,8 +212,8 @@ def test_e15_reports_character_and_position(table: Table) -> None:
         ("/a/x.fq.gz", None),
         ("/a/x.fastq.gz", None),
         ("/a/x.fq", None),
-        ("/a/x.FQ.GZ", "maiuscolo"),
-        ("/a/x.fastq.Gz", "maiuscolo"),
+        ("/a/x.FQ.GZ", None),
+        ("/a/x.fastq.Gz", None),
         ("/a/x.fq.bz2", ".bz2"),
         ("/a/x.fastq.xz", ".xz"),
         ("/a/x.fq.zst", ".zst"),
@@ -223,7 +224,7 @@ def test_e15_reports_character_and_position(table: Table) -> None:
         ("/a/x", "non è riconosciuta"),
     ],
 )
-def test_e16_messages(path: str, fragment: str | None) -> None:
+def test_e15_messages(path: str, fragment: str | None) -> None:
     problem = _extension_problem(path)
     if fragment is None:
         assert problem is None
@@ -231,7 +232,7 @@ def test_e16_messages(path: str, fragment: str | None) -> None:
         assert fragment in problem
 
 
-def test_e07_is_not_also_e16(table: Table) -> None:
+def test_e07_is_not_also_e15(table: Table) -> None:
     table.set(8, "File_forward", "/a/x_1.fq")
     result = table.validate()
     assert "E07" in codes(result)
@@ -257,7 +258,14 @@ def test_does_not_stop_at_first_error(table: Table) -> None:
     table.set(8, "File_reverse", table.get(8, "File_forward"))
     table.set(9, "Forward", "ACGU")
     table.set(10, "Category", "")
+    table.set(11, "Sample", "AST 1 2")
     result = table.validate()
     assert {"E02", "E03", "E04", "E05", "E06", "E07", "E08", "E09"} <= codes(result, "error")
-    assert {"W01", "W03"} <= codes(result, "warning")
+    assert "W01" in codes(result, "warning")
     assert result.tsv is None
+
+
+def test_e15_accepts_uppercase_extensions(table: Table) -> None:
+    table.set(6, "File_forward", "/a/x_1.FQ.GZ")
+    table.set(7, "File_forward", "/a/x_2.Fastq.Gz")
+    assert not codes(table.validate(), "error")

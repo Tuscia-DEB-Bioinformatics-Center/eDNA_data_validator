@@ -12,7 +12,7 @@ class Issue:
     """One finding of the validator.
 
     Attributes:
-        code: Rule code (E04, W03, I01...).
+        code: Rule code (E04, W02, I01...).
         severity: ``error``, ``warning`` or ``info``.
         sheet: Name of the sheet/dataset, empty for file-level issues.
         message: Italian message for the wet lab, including what to fix.

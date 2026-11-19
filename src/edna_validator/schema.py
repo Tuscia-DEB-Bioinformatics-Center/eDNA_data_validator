@@ -28,8 +28,8 @@ CATEGORY_SIMILARITY_THRESHOLD = 0.90
 # E09: IUPAC nucleotide codes accepted in adapters (case-insensitive).
 ADAPTER_ALPHABET = "ACGTRYSWKMBDHVN"
 
-# E14: characters accepted in file paths. A plain space is also accepted in folder names,
-# but not in the file name (E06).
+# E14: characters accepted in file and folder names. A plain space is also accepted; the
+# slash is a separator between the parts of the path and is never part of a name.
 PATH_ALLOWED_CHARS = frozenset(string.ascii_letters + string.digits + "_-/+.")
 
 # E11: whitespace that would break the TSV layout when found inside a cell.
@@ -150,8 +150,8 @@ CODE_TITLES: dict[str, str] = {
     "E02": "Cella vuota in una colonna obbligatoria",
     "E03": "Nome del campione vuoto dopo la normalizzazione",
     "E04": "Campione duplicato",
-    "E05": "Percorso non assoluto",
-    "E06": "Spazio nel nome del file",
+    "E05": "Campioni che differiscono solo per maiuscole/minuscole",
+    "E06": "Percorso non assoluto",
     "E07": "FASTQ non compresso",
     "E08": "File forward e reverse identici",
     "E09": "Carattere non valido nell'adattatore",
@@ -166,8 +166,7 @@ CODE_TITLES: dict[str, str] = {
     "E18": "Percorso fuori dalla radice indicata",
     "W01": "Categoria vuota",
     "W02": "Categorie simili",
-    "W03": "Campioni che differiscono solo per maiuscole/minuscole",
-    "W04": "Cella convertita da Excel in numero o data",
+    "W03": "Cella convertita da Excel in numero o data",
     "I01": "Riepilogo delle categorie",
     "I02": "Colonne extra ignorate",
     "I03": "Nomi dei campioni normalizzati",

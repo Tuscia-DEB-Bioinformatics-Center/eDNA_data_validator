@@ -122,8 +122,8 @@ VARIANTS = [
     Variant("E02", lambda t: t.set(5, "File_forward", ""), [5], "File_forward"),
     Variant("E03", lambda t: t.set(4, "Sample", "--"), [4], "Sample"),
     Variant("E04", lambda t: t.set(3, "Sample", "Civ-B 2.2"), [2, 3], "Sample"),
-    Variant("E05", lambda t: t.set(6, "File_reverse", "dati/x_2.fq.gz"), [6], "File_reverse"),
-    Variant("E06", lambda t: t.set(7, "File_forward", "/a/x 1.fq.gz"), [7], "File_forward"),
+    Variant("E05", lambda t: t.set(2, "Sample", "civ b 2.1"), [2, 15], "Sample"),
+    Variant("E06", lambda t: t.set(6, "File_reverse", "dati/x_2.fq.gz"), [6], "File_reverse"),
     Variant("E07", lambda t: t.set(8, "File_forward", "/a/x_1.FASTQ"), [8], "File_forward"),
     Variant(
         "E08", lambda t: t.set(9, "File_reverse", t.get(9, "File_forward")), [9], "File_reverse"
@@ -142,8 +142,7 @@ VARIANTS = [
         [4, 12, 16, 17, 53, 54],
         "Category",
     ),
-    Variant("W03", lambda t: t.set(2, "Sample", "civ b 2.1"), [2, 15], "Sample"),
-    Variant("W04", lambda t: t.set(5, "Category", 12), [5], "Category", fmt="xlsx"),
+    Variant("W03", lambda t: t.set(5, "Category", 12), [5], "Category", fmt="xlsx"),
 ]
 
 

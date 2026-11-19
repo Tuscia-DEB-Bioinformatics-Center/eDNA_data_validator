@@ -83,7 +83,7 @@ python -m edna_validator controllo-server out --radice "Z:\reads" --prefisso /ar
 | `--prefisso PATH` | Start of the server paths to replace with `--radice`. If omitted, the whole path is searched under `--radice`. |
 | `--out DIR` | Where to save `controllo_server_report.txt`. Default: the folder of the first file. |
 
-The exit code is 0 if all files are present, 1 if some are missing (E18 or E19) and 2 if the
+The exit code is 0 if all files are present, 1 if some are missing (E17 or E18) and 2 if the
 check cannot run (unreachable folder, unreadable file, wrong arguments).
 
 ## Output
@@ -105,8 +105,8 @@ describes each one in detail, with examples and the way to fix the table.
 | E02 | Empty cell in a required column (other than Category) |
 | E03 | Sample empty after normalisation |
 | E04 | Duplicated Sample (compared on normalised names) |
-| E05 | Path is not absolute |
-| E06 | Space in the file name (spaces in folder names are accepted) |
+| E05 | Samples that differ only by letter case |
+| E06 | Path is not absolute |
 | E07 | Uncompressed FASTQ |
 | E08 | File_forward identical to File_reverse |
 | E09 | Invalid character in an adapter (only IUPAC nucleotide codes are accepted) |
@@ -114,15 +114,14 @@ describes each one in detail, with examples and the way to fix the table.
 | E11 | Tab or line break inside a cell |
 | E12 | Sample stored by the spreadsheet as a number or a date (the original text may be altered, e.g. `1.10` → `1.1`) |
 | E13 | Formula without a saved value |
-| E14 | Character not allowed in a path (allowed: unaccented letters, digits, `_ - / + .`) |
-| E15 | Extension other than `.fq.gz` / `.fastq.gz` |
+| E14 | Character not allowed in a path (allowed in names: unaccented letters, digits, spaces, `_ - + .`; `/` only separates the parts of the path) |
+| E15 | Extension other than `.fq.gz` / `.fastq.gz` (upper or lower case) |
 | E16 | Sheet name that cannot be used for the TSV file: empty after normalisation, or same file name as another sheet |
 | E17 | FASTQ listed in a TSV file that does not exist on the server (server check only) |
 | E18 | FASTQ path that does not start with the prefix given to the server check (server check only) |
 | W01 | Empty Category, replaced by `Uncategorized` |
 | W02 | Similar categories |
-| W03 | Samples that differ only by letter case |
-| W04 | Cell of a column other than Sample stored by the spreadsheet as a number or a date |
+| W03 | Cell of a column other than Sample stored by the spreadsheet as a number or a date |
 | I01 | Category summary |
 | I02 | Extra columns ignored |
 | I03 | Sample names changed by the normalisation |
