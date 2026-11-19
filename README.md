@@ -68,17 +68,26 @@ python -m edna_validator tests/data/valid_example.tsv --pipeline eDNA
 
 ### Server check
 
-`controllo-server` checks that the FASTQ files listed in validated TSV files exist on the server.
-It only runs on a computer that can see the reads folder (for example through a mapped network
-drive). The validator itself never accesses the server.
+The validator itself never accesses the server. Checking that the FASTQ files listed in validated
+TSV files exist on the server is a separate, read-only step, available in two forms.
 
-For users who work on the server itself there is a standalone Bash script,
-[`web/controllo_server.sh`](web/controllo_server.sh), also offered as a download on the web page.
-It needs only `bash` and `awk` (no Python, no installation): copy it to the server together with
-the TSV files, then run `cd FOLDER && bash controllo_server.sh`. It prints the same report as
-`controllo-server` (`OK` / `E17 MANCA` / summary), checks every distinct path with `-f`, accepts
-Windows line endings and a BOM, and never modifies anything. The exit code is 0 if all files are
+**Bash script (on the server).** [`web/controllo_server.sh`](web/controllo_server.sh) is also
+offered as a download on the web page. It needs only `bash` and `awk` (no Python, no
+installation): copy it to the server together with the TSV files, then run:
+
+```bash
+cd FOLDER && bash controllo_server.sh
+```
+
+Without arguments it checks every `.tsv` file in the current folder; a folder or file can also be
+passed as an argument. It checks every distinct path with `-f`, accepts Windows line endings and
+a BOM, and never modifies anything. The report lists, for each table, `OK` or the missing files
+(`E17 MANCA`, with column and rows), followed by a summary. The exit code is 0 if all files are
 present, 1 if some are missing and 2 if the check cannot run.
+
+**Python command (from a computer that can see the reads folder).** `controllo-server` produces
+the same report and only runs where the reads folder is reachable, for example through a mapped
+network drive.
 
 ```bash
 python -m edna_validator controllo-server out --radice "Z:\reads" --prefisso /archive/project/reads
@@ -151,7 +160,7 @@ later. In the browser it runs on Python 3.12 through Pyodide 0.27.7.
 | Path | Content |
 |---|---|
 | `src/edna_validator/` | Engine: schema, cleaning, readers, rules, report, writer, CLI |
-| `web/` | Web interface (plain HTML, CSS and JavaScript) |
+| `web/` | Web interface (plain HTML, CSS and JavaScript) and the standalone server-check script `controllo_server.sh` |
 | `scripts/build_web.py` | Builds the static site |
 | `tests/` | Test suite |
 | `tests/data/valid_example.tsv` | Valid reference table (`eDNA` pipeline) from which the tests derive their broken variants |
@@ -165,7 +174,7 @@ on every push and pull request, on any branch.
 python scripts/build_web.py
 ```
 
-Generates `dist/` with `index.html`, `app.js` and `style.css`. The Python sources of the
+Generates `dist/` with `index.html`, `app.js`, `style.css` and `controllo_server.sh`. The Python sources of the
 package are embedded in `index.html`, so the page also works when opened directly from disk.
 To serve it locally:
 
