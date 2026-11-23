@@ -131,8 +131,8 @@ describes each one in detail, with examples and the way to fix the table.
 | E11 | Tab or line break inside a cell |
 | E12 | Sample stored by the spreadsheet as a number or a date (the original text may be altered, e.g. `1.10` → `1.1`) |
 | E13 | Formula without a saved value |
-| E14 | Character not allowed in a path (allowed in names: unaccented letters, digits, spaces, `_ - + .`; `/` only separates the parts of the path) |
-| E15 | Extension other than `.fq.gz` / `.fastq.gz` (upper or lower case) |
+| E14 | Character not allowed in a path (allowed in names: unaccented letters, digits, spaces, `_ - + .`) |
+| E15 | Extension other than `.fq.gz` / `.fastq.gz` (upper case extensions are accepted) |
 | E16 | Sheet name that cannot be used for the TSV file: empty after normalisation, or same file name as another sheet |
 | E17 | FASTQ listed in a TSV file that does not exist on the server (server check only) |
 | E18 | FASTQ path that does not start with the prefix given to the server check (server check only) |

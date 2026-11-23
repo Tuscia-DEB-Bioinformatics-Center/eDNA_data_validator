@@ -150,10 +150,10 @@ def test_e14_invisible_space_in_a_folder_name(table: Table) -> None:
     assert "U+00A0 in posizione 3" in find(result, "E14")[0].message
 
 
-def test_e14_message_says_slash_only_separates(table: Table) -> None:
+def test_e14_message_lists_the_allowed_characters(table: Table) -> None:
     table.set(6, "File_forward", "/a/x#1.fq.gz")
     message = find(table.validate(), "E14")[0].message
-    assert "la barra / serve solo a separare" in message
+    assert "lettere non accentate, cifre, spazi e i simboli _ - + ." in message
 
 
 def test_single_end_pipelines(table: Table) -> None:

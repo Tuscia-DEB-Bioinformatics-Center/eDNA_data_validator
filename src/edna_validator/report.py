@@ -14,7 +14,7 @@ def format_rows(rows: list[int]) -> str:
     """Compress row numbers into ranges.
 
     Args:
-        rows: Excel row numbers.
+        rows: Row numbers (the header is row 1).
 
     Returns:
         A string such as ``"2-5, 8, 10-11"``; empty if there are no rows.

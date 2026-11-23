@@ -259,7 +259,7 @@ function issueGroups(issues) {
       const list = el("ul");
       for (const issue of group) {
         const where = [];
-        if (issue.rows_text) where.push(`${issue.rows.length === 1 ? "Riga" : "Righe"} Excel: ${issue.rows_text}`);
+        if (issue.rows_text) where.push(`${issue.rows.length === 1 ? "Riga" : "Righe"}: ${issue.rows_text}`);
         if (issue.column) where.push(`Colonna: ${issue.column}`);
         list.append(
           el(

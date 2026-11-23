@@ -432,8 +432,7 @@ def disallowed_path_chars(ds: Dataset, pipeline: Pipeline) -> list[Issue]:
                 ds.name,
                 f"Il percorso '{value}' contiene caratteri non ammessi: {found}. Nei nomi di "
                 "file e cartelle sono ammessi solo lettere non accentate, cifre, spazi e i "
-                "simboli _ - + . (la barra / serve solo a separare le parti del percorso). "
-                "Rinomina file/cartelle sul server e aggiorna la tabella.",
+                "simboli _ - + . Rinomina file/cartelle sul server e aggiorna la tabella.",
                 rows,
                 column,
                 value,
@@ -456,7 +455,7 @@ def _extension_problem(path: str) -> str | None:
 
 
 def nonstandard_extensions(ds: Dataset, pipeline: Pipeline) -> list[Issue]:
-    """E15: extension other than ``.fq.gz`` / ``.fastq.gz`` (letter case is ignored)."""
+    """E15: extension other than ``.fq.gz`` / ``.fastq.gz`` (upper case extensions are accepted)."""
     groups = _grouped(
         ds, pipeline.file_columns, lambda value: _extension_problem(value) is not None
     )
@@ -464,8 +463,8 @@ def nonstandard_extensions(ds: Dataset, pipeline: Pipeline) -> list[Issue]:
         Issue.create(
             "E15",
             ds.name,
-            f"Il file '{value}' non termina con .fq.gz o .fastq.gz (maiuscole o minuscole): "
-            f"{_extension_problem(value)} e aggiorna la tabella.",
+            f"Il file '{value}' non termina con .fq.gz o .fastq.gz (sono ammesse anche in "
+            f"maiuscolo): {_extension_problem(value)} e aggiorna la tabella.",
             rows,
             column,
             value,

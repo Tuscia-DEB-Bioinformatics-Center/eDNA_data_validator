@@ -16,7 +16,7 @@ class Issue:
         severity: ``error``, ``warning`` or ``info``.
         sheet: Name of the sheet/dataset, empty for file-level issues.
         message: Italian message for the wet lab, including what to fix.
-        rows: Excel row numbers involved.
+        rows: Row numbers involved (the header is row 1).
         column: Column involved, if any.
         value: Offending value, if any.
     """
@@ -45,7 +45,7 @@ class Issue:
             code: Rule code.
             sheet: Sheet name.
             message: Italian message.
-            rows: Excel rows involved.
+            rows: Rows involved (the header is row 1).
             column: Column involved.
             value: Offending value.
 
@@ -57,7 +57,7 @@ class Issue:
 
 @dataclass
 class Row:
-    """One data row: Excel row number and trimmed values by column name."""
+    """One data row: row number (the header is row 1) and trimmed values by column name."""
 
     number: int
     values: dict[str, str]
